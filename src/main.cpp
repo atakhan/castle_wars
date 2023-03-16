@@ -1,29 +1,38 @@
 #include <raylib-cpp.hpp>
 
+#include "Colors.h"
+#include "modules/Castle/Castle.h"
+#include "modules/Game/Game.h"
+#include "modules/Milestone/Milestone.h"
+#include "modules/Warrior/Warrior.h"
+#include "modules/Game/Game.h"
+
+#include <iostream>
+#include <vector>
+#include <iterator>
+
+
 int main() {
-    
-    // Initialization
-    int screenWidth = 800;
-    int screenHeight = 450;
+  int screenWidth = 1000;
+  int screenHeight = 1200;
 
-    raylib::Color textColor(LIGHTGRAY);
-    raylib::Window w(screenWidth, screenHeight, "Raylib C++ Starter Kit Example");
-    
-    SetTargetFPS(60);
+  raylib::Color textColor(LIGHTGRAY);
+  raylib::Window window(screenWidth, screenHeight, "Castle Wars");
+  
+  SetTargetFPS(60);
 
-    // Main game loop
-    while (!w.ShouldClose()) // Detect window close button or ESC key
-    {
-        // Update
+  Game game = Game();
 
-        // TODO: Update your variables here
+  while (!window.ShouldClose()) {
+      
+      game.Update();
 
-        // Draw
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        textColor.DrawText("Congrats! You created your first window!", 190, 200, 20);
-        EndDrawing();
-    }
+      BeginDrawing();
+        ClearBackground(CW_MAIN_BG);
+        game.Draw();
+      EndDrawing();
 
-    return 0;
+  }
+
+  return 0;
 }

@@ -6,10 +6,10 @@ Milestone::Milestone(Vector2 _pos) {
 }
 
 void Milestone::Draw() {
-  DrawCircle(
-    pos.x,
-    pos.y,
-    5,
-    RED
-  );
+  if (reached == false) {
+    DrawCircle(
+      pos.x, pos.y,
+      5, CW_RED
+    );
+  }
 }

@@ -7,17 +7,14 @@
 class Castle
 {
 public:
-  int radius;
   Vector2 pos;
-  Vector2 vel;
   Color color;
-  float speed = 1;
-  float angle;
+  float width;
+  float height;
 
   Castle();
-  Castle(Vector2 pos);
+  Castle(Vector2 pos, Color color);
 
-  void Move();
   void Update();
   void Draw();
 

@@ -2,26 +2,28 @@
 
 Warrior::Warrior() {}
 
-Warrior::Warrior(Vector2 _pos) {
+Warrior::Warrior(Vector2 _pos, std::vector<Milestone> _path) {
   radius = 10;
-  color = BLUE;
+  color = CW_BLUE;
   vel.x = 0;
   vel.y = 0;
-  speed = 1;
+  speed = 1.0f;
   angle = 0.0f;
   pos = _pos;
-  path.push_back(Milestone({200,120}));
-  path.push_back(Milestone({500,600}));
-  path.push_back(Milestone({100,300}));
-  path.push_back(Milestone({900,600}));
+  path = _path;
   currentMilestone = 0;
+  status = IDLE;
 }
 
 void Warrior::Move() {
+  if (currentMilestone + 1 > path.size()) {
+    status = IDLE;
+    return;
+  }
   Vector2 targetPos = path.at(currentMilestone).pos;
   float dx = targetPos.x - pos.x;
   float dy = targetPos.y - pos.y;
-  
+
   angle = atan2f(dy, dx);
   
   float dxx = speed * cosf(angle);
@@ -31,25 +33,27 @@ void Warrior::Move() {
   pos.y = pos.y + dyy;
   
   if (MilestoneReached(targetPos)) {
-    if (currentMilestone + 1 < path.size()) {
-      currentMilestone++;
-    }
+    path.at(currentMilestone).reached = true;
+    currentMilestone++;
   }
 }
 
 bool Warrior::MilestoneReached(Vector2 targetPos) {
-  if ( 
-    fabs(pos.x - targetPos.x) < 1 &&
-    fabs(pos.y - targetPos.y) < 1
-  ) {
-    std::cout << currentMilestone << " - " << targetPos.x << "," << targetPos.y << std::endl;
+  if ( fabs(pos.x - targetPos.x) < 1 && fabs(pos.y - targetPos.y) < 1 ) {
     return true;
   }
+
   return false;
 }
 
 void Warrior::Update() {
-  Move();
+  if (status == ATTACK) {
+    Move();
+  }
+}
+
+void Warrior::SetAttackStatus() {
+  status = ATTACK;
 }
 
 void Warrior::Draw() {

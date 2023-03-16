@@ -1,6 +1,7 @@
 #ifndef WARRIOR_H
 #define WARRIOR_H
 
+#include "../../Colors.h"
 #include "../Milestone/Milestone.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
@@ -17,10 +18,17 @@ public:
   float angle;
   std::vector<Milestone> path;
   int currentMilestone;
+  
+  enum Status {
+    IDLE,
+    ATTACK
+  };
+  Status status;
 
   Warrior();
-  Warrior(Vector2 pos);
+  Warrior(Vector2 pos, std::vector<Milestone> path);
 
+  void SetAttackStatus();
   void Move();
   bool MilestoneReached(Vector2 targetPos);
   void Update();
