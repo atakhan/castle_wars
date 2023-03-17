@@ -2,24 +2,19 @@
 
 Warrior::Warrior() {}
 
-Warrior::Warrior(Vector2 _pos, std::vector<Milestone> _path) {
+Warrior::Warrior(Vector2 pos_, std::vector<Milestone> path_, Color color_) {
   radius = 10;
-  color = CW_BLUE;
-  vel.x = 0;
-  vel.y = 0;
+  color = color_;
+  vel = {0, 0};
   speed = 1.0f;
   angle = 0.0f;
-  pos = _pos;
-  path = _path;
+  pos = pos_;
+  path = path_;
   currentMilestone = 0;
   status = IDLE;
 }
 
 void Warrior::Move() {
-  if (currentMilestone + 1 > path.size()) {
-    status = IDLE;
-    return;
-  }
   Vector2 targetPos = path.at(currentMilestone).pos;
   float dx = targetPos.x - pos.x;
   float dy = targetPos.y - pos.y;
@@ -28,14 +23,9 @@ void Warrior::Move() {
   
   float dxx = speed * cosf(angle);
   float dyy = speed * sinf(angle);
-
+  
   pos.x = pos.x + dxx;
   pos.y = pos.y + dyy;
-  
-  if (MilestoneReached(targetPos)) {
-    path.at(currentMilestone).reached = true;
-    currentMilestone++;
-  }
 }
 
 bool Warrior::MilestoneReached(Vector2 targetPos) {
@@ -46,14 +36,44 @@ bool Warrior::MilestoneReached(Vector2 targetPos) {
   return false;
 }
 
-void Warrior::Update() {
-  if (status == ATTACK) {
-    Move();
-  }
-}
+// void Warrior::Update(const GamePlayUi &ui) {
+//   if (status == ATTACK) {
+//     if (currentMilestone + 1 > path.size()) {
+//       status = IDLE;
+//       return;
+//     }
+//     Move();
+//     if (MilestoneReached(path.at(currentMilestone).pos)) {
+//       path.at(currentMilestone).reached = true;
+//       currentMilestone++;
+//     }
+//   } 
+  
+//   if (status == RETREAT) {
+//     if (currentMilestone < 0) {
+//       status = IDLE;
+//       return;
+//     }
+//     Move();
+//     if (MilestoneReached(path.at(currentMilestone).pos)) {
+//       path.at(currentMilestone).reached = true;
+//       currentMilestone--;
+//     }
+//   }
 
-void Warrior::SetAttackStatus() {
-  status = ATTACK;
+  // if (ui.IsOrderButtonPressed()) {
+  //   if (status == ATTACK) {
+  //     SetStatus(RETREAT);
+  //   } else if (status == RETREAT) {
+  //     SetStatus(ATTACK);
+  //   } else if (status == IDLE) {
+  //     SetStatus(ATTACK);
+  //   }
+  // }
+// }
+
+void Warrior::SetStatus(Status newStatus) {
+  status = newStatus;
 }
 
 void Warrior::Draw() {

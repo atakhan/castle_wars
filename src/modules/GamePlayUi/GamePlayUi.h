@@ -5,6 +5,7 @@
 #include "../Warrior/Warrior.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
+#include <string>
 
 class GamePlayUi
 {
@@ -13,13 +14,16 @@ public:
   Color color;
   float width;
   float height;
-  Rectangle attackBtn;
+  Rectangle orderBtn;
 
   GamePlayUi();
 
-  bool IsAttackButtonPressed();
+  bool IsOrderButtonPressed();
+  
   void Update();
-  void Draw();
+  
+  // void DrawOrderButton(Warrior &warrior);
+  // void Draw(Warrior &warrior);
 
 };
 

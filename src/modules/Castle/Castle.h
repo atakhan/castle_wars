@@ -7,16 +7,20 @@
 class Castle
 {
 public:
+  float radius;
   Vector2 pos;
   Color color;
-  float width;
-  float height;
 
   Castle();
   Castle(Vector2 pos, Color color);
 
   void Update();
   void Draw();
+
+  static void DrawAll(std::vector<Castle> &castles) {
+    for(auto castle = castles.begin(); castle!=castles.end(); castle++)
+      castle->Draw();
+  }
 
 };
 

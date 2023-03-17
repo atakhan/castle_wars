@@ -3,9 +3,16 @@
 
 #include "../../Colors.h"
 #include "../Milestone/Milestone.h"
+#include "../GamePlayUi/GamePlayUi.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
 #include <limits>
+
+enum Status {
+  IDLE,
+  ATTACK,
+  RETREAT
+};
 
 class Warrior
 {
@@ -18,20 +25,16 @@ public:
   float angle;
   std::vector<Milestone> path;
   int currentMilestone;
-  
-  enum Status {
-    IDLE,
-    ATTACK
-  };
+
   Status status;
 
   Warrior();
-  Warrior(Vector2 pos, std::vector<Milestone> path);
+  Warrior(Vector2 pos, std::vector<Milestone> path, Color color);
 
-  void SetAttackStatus();
+  void SetStatus(Status newStatus);
   void Move();
   bool MilestoneReached(Vector2 targetPos);
-  void Update();
+  // void Update(const GamePlayUi &ui);
   void Draw();
 
   static void DrawPath(std::vector<Milestone> &path) {

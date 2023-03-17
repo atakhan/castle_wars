@@ -1,12 +1,18 @@
 #include "Game.h"
 
 Game::Game() {
-  blueCastle = Castle({100, 100}, CW_BLUE);
-  redCastle = Castle({900, 900}, CW_RED);
+  GenerateCastles();
   GeneratePath();
-  warrior = Warrior({100, 100}, path);
+  // warrior = Warrior(blueCastle.pos, path, CW_BLUE);
+  // std::vector<Milestone> reversedPath (path.rbegin(), path.rend());
+  // warrior2 = Warrior(redCastle.pos, reversedPath, CW_RED);
   ui = GamePlayUi();
   road = Road(path);
+}
+
+void Game::GenerateCastles() {
+  castles.push_back(Castle({100, 100}, CW_BLUE));
+  castles.push_back(Castle({900, 900}, CW_RED));
 }
 
 void Game::GeneratePath() {
@@ -28,16 +34,16 @@ void Game::DrawStats() {
 void Game::Draw() {
   DrawStats();
   road.Draw();
-  warrior.Draw();
-  blueCastle.Draw();
-  redCastle.Draw();
-  ui.Draw();
-  Warrior::DrawPath(warrior.path);
+  Castle::DrawAll(castles);
+  // warrior.Draw();
+  // warrior2.Draw();
+  // ui.Draw(warrior);
+  // Warrior::DrawPath(warrior.path);
 }
 
 void Game::Update() {
-  warrior.Update();
-  if (ui.IsAttackButtonPressed()) {
-    warrior.SetAttackStatus();
-  }
+  
+  // warrior.Update(ui);
+  // warrior2.Update(ui);
+
 }
