@@ -8,12 +8,6 @@
 #include <iostream>
 #include <limits>
 
-enum Status {
-  IDLE,
-  ATTACK,
-  RETREAT
-};
-
 class Warrior
 {
 public:
@@ -23,23 +17,25 @@ public:
   Color color;
   float speed = 1;
   float angle;
-  std::vector<Milestone> path;
-  int currentMilestone;
-
-  Status status;
+  Vector2 target;
 
   Warrior();
-  Warrior(Vector2 pos, std::vector<Milestone> path, Color color);
+  Warrior(Vector2 pos, Vector2 target, Color color);
 
-  void SetStatus(Status newStatus);
   void Move();
-  bool MilestoneReached(Vector2 targetPos);
-  // void Update(const GamePlayUi &ui);
+  bool CastleReached();
+
+  void Update();
   void Draw();
 
-  static void DrawPath(std::vector<Milestone> &path) {
-    for(auto milestone = path.begin(); milestone != path.end(); milestone++)
-      milestone->Draw();
+  static void UpdateAll(std::vector<Warrior> &warriors) {
+    for(auto warrior = warriors.begin(); warrior != warriors.end(); warrior++)
+      warrior->Update();
+  }
+
+  static void DrawAll(std::vector<Warrior> &warriors) {
+    for(auto warrior = warriors.begin(); warrior != warriors.end(); warrior++)
+      warrior->Draw();
   }
 
 };

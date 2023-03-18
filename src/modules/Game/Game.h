@@ -3,7 +3,6 @@
 
 #include "../../Colors.h"
 #include "../Warrior/Warrior.h"
-#include "../Army/Army.h"
 #include "../Castle/Castle.h"
 #include "../Road/Road.h"
 #include "../GamePlayUi/GamePlayUi.h"
@@ -19,8 +18,8 @@ class Game {
 public:
   Road road;
   GamePlayUi ui;
+  std::vector<Warrior> warriors;
   std::vector<Castle> castles;
-  std::vector<Army> armies;
   std::vector<Milestone> path;
 
   Game();
