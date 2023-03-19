@@ -1,7 +1,7 @@
 #ifndef GAMEPLAYUI_H
 #define GAMEPLAYUI_H
 
-#include "../../Colors.h"
+#include "../../Configs.h"
 #include "../Warrior/Warrior.h"
 #include <raylib-cpp.hpp>
 #include <iostream>

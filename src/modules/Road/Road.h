@@ -1,7 +1,7 @@
 #ifndef ROAD_H
 #define ROAD_H
 
-#include "../../Colors.h"
+#include "../../Configs.h"
 #include "../Milestone/Milestone.h"
 #include <raylib-cpp.hpp>
 #include <iostream>

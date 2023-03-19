@@ -1,11 +1,13 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "../../Colors.h"
-#include "../Warrior/Warrior.h"
+#include "../../Configs.h"
 #include "../Castle/Castle.h"
+#include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
+#include "../Fight/Fight.h"
 #include "../GamePlayUi/GamePlayUi.h"
+
 #include <raylib-cpp.hpp>
 
 enum GameState {
@@ -16,6 +18,7 @@ enum GameState {
 
 class Game {
 public:
+  Fight fight;
   Road road;
   GamePlayUi ui;
   std::vector<Warrior> warriors;

@@ -1,6 +1,6 @@
 #include <raylib-cpp.hpp>
 
-#include "Colors.h"
+#include "Configs.h"
 #include "modules/Castle/Castle.h"
 #include "modules/Game/Game.h"
 #include "modules/Milestone/Milestone.h"

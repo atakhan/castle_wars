@@ -1,5 +1,5 @@
-#ifndef COLORS_H
-#define COLORS_H
+#ifndef CONFIGS_H
+#define CONFIGS_H
 
 #define CW_RED             {205, 70, 50, 255}
 #define CW_BLUE            {0, 117, 162, 255}
@@ -8,4 +8,9 @@
 #define CW_MAIN_BG         {245,245,235,255}
 #define CW_ROAD            {198, 197, 185,255}
 
-#endif  // COLORS_H
+enum Fraction {
+    PLAYER,
+    AI
+};
+
+#endif  // CONFIGS_H

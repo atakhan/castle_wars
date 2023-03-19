@@ -22,9 +22,10 @@ public:
   bool isCurrent;
   CastleStatus status;
   unsigned int hp;
+  Fraction fraction;
 
   Castle();
-  Castle(Vector2 pos, Color color);
+  Castle(Vector2 pos, Color color, Fraction fraction);
 
   void Attack(std::vector<Warrior> &warriors);
   void AssignATarget(std::vector<Castle> &castles);

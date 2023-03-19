@@ -1,8 +1,9 @@
 #include "Game.h"
 
 Game::Game() {
-  castles.push_back(Castle({200, 200}, CW_BLUE));
-  castles.push_back(Castle({800, 800}, CW_RED));
+  fight = Fight();
+  castles.push_back(Castle({200, 200}, CW_BLUE, PLAYER));
+  castles.push_back(Castle({800, 800}, CW_RED, AI));
 
   road = Road(
     std::vector<Milestone> {
@@ -26,4 +27,5 @@ void Game::Draw() {
 void Game::Update() {
   Warrior::UpdateAll(warriors);
   Castle::UpdateAll(castles, warriors);
+  fight.Update(castles, warriors);
 }

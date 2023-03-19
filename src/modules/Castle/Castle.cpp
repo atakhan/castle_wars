@@ -2,12 +2,14 @@
 
 Castle::Castle() {}
 
-Castle::Castle(Vector2 _pos, Color _color) {
+Castle::Castle(Vector2 _pos, Color _color, Fraction fraction_) {
   radius = 50.0f;
   color = _color;
   pos = _pos;
   
+  fraction = fraction_;
   warriorsCount = 1;
+  hp = 10;
   
   target = pos;
   isCurrent = false;
@@ -16,7 +18,7 @@ Castle::Castle(Vector2 _pos, Color _color) {
 
 void Castle::Attack(std::vector<Warrior> &warriors) {
   if (warriorsCount > 0 && status == ATTACK) {
-    warriors.push_back(Warrior(pos, target, color));
+    warriors.push_back(Warrior(pos, target, color, fraction));
     warriorsCount--;
   }
 }
@@ -52,4 +54,6 @@ void Castle::Draw() {
   if (isCurrent) {
     DrawLineEx(pos, GetMousePosition(), 4.0, color);
   }
+  std::string hp_text = std::to_string(hp);
+  raylib::DrawText(hp_text, pos.x, pos.y, 20, WHITE);
 }

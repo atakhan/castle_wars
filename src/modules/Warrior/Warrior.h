@@ -1,9 +1,8 @@
 #ifndef WARRIOR_H
 #define WARRIOR_H
 
-#include "../../Colors.h"
-#include "../Milestone/Milestone.h"
-#include "../GamePlayUi/GamePlayUi.h"
+#include "../../Configs.h"
+
 #include <raylib-cpp.hpp>
 #include <iostream>
 #include <limits>
@@ -15,12 +14,14 @@ public:
   Vector2 pos;
   Vector2 vel;
   Color color;
-  float speed = 1;
+  float speed = 3;
   float angle;
   Vector2 target;
+  Fraction fraction;
+  bool targetReached;
 
   Warrior();
-  Warrior(Vector2 pos, Vector2 target, Color color);
+  Warrior(Vector2 pos, Vector2 target, Color color, Fraction fraction);
 
   void Move();
   bool CastleReached();

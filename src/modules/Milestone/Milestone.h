@@ -1,7 +1,7 @@
 #ifndef MILESTONE_H
 #define MILESTONE_H
 
-#include "../../Colors.h"
+#include "../../Configs.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
 
