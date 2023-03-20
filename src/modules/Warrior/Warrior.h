@@ -14,9 +14,10 @@ public:
   Vector2 pos;
   Vector2 vel;
   Color color;
-  float speed = 3;
+  float speed;
   float angle;
   Vector2 target;
+  Vector2 homeCastle;
   Fraction fraction;
   bool targetReached;
 

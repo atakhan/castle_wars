@@ -9,7 +9,8 @@
 class Fight
 {
 public:
-  bool UnitsCollider(Warrior &warrior, Castle &castle);
+  bool WarriorCastleCollider(Warrior &warrior, Castle &castle);
+  bool WarriorWarriorCollider(Warrior &warrior, Warrior &warrior2);
   void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors);
 };
 

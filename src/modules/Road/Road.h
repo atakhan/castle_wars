@@ -15,6 +15,11 @@ public:
   Road(std::vector<Milestone> path);
 
   void Draw();
+
+  static void DrawAll(std::vector<Road> &roads) {
+    for(auto road = roads.begin(); road!=roads.end(); road++)
+      road->Draw();
+  }
 };
 
 #endif  // ROAD_H

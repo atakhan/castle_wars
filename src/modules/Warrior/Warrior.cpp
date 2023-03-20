@@ -6,12 +6,13 @@ Warrior::Warrior(Vector2 pos_, Vector2 targetPos, Color color_, Fraction fractio
   radius = 10;
   color = color_;
   vel = {0, 0};
-  speed = 1.0f;
+  speed = 3.0f;
   angle = 0.0f;
   pos = pos_;
   target = targetPos;
   fraction = fraction_;
   targetReached = false;
+  homeCastle = pos_;
 }
 
 void Warrior::Move() {

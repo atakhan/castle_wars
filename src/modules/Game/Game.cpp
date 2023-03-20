@@ -2,15 +2,13 @@
 
 Game::Game() {
   fight = Fight();
-  castles.push_back(Castle({200, 200}, CW_BLUE, PLAYER));
-  castles.push_back(Castle({800, 800}, CW_RED, AI));
+  castles.push_back(Castle({300, 300}, CW_BLUE, PLAYER));
+  castles.push_back(Castle({700, 800}, CW_RED, AI));
+  castles.push_back(Castle({550, 200}, CW_RED, AI));
 
-  road = Road(
-    std::vector<Milestone> {
-      Milestone({200, 200}),
-      Milestone({800, 800})
-    }
-  );
+  roads.push_back(Road(std::vector<Milestone> { Milestone({300, 300}), Milestone({700, 800}) }));
+  roads.push_back(Road(std::vector<Milestone> { Milestone({300, 300}), Milestone({550, 200}) }));
+  roads.push_back(Road(std::vector<Milestone> { Milestone({700, 800}), Milestone({550, 200}) }));
 }
 
 void Game::DrawStats() {
@@ -19,13 +17,15 @@ void Game::DrawStats() {
 
 void Game::Draw() {
   DrawStats();
-  road.Draw();
+
+  Road::DrawAll(roads);
   Castle::DrawAll(castles);
   Warrior::DrawAll(warriors);
 }
 
 void Game::Update() {
-  Warrior::UpdateAll(warriors);
-  Castle::UpdateAll(castles, warriors);
   fight.Update(castles, warriors);
+
+  Castle::UpdateAll(castles, warriors);
+  Warrior::UpdateAll(warriors);
 }

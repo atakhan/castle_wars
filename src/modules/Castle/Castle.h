@@ -13,22 +13,26 @@ enum CastleStatus {
 class Castle
 {
 public:
-  float radius;
-  Vector2 pos;
-  Color color;
-  unsigned int warriorsCount;
   bool production;
-  Vector2 target;
   bool isCurrent;
-  CastleStatus status;
-  unsigned int hp;
+  float radius;
+  int warriorsCount;
+  Color color;
+  Vector2 pos;
+  Vector2 target;
   Fraction fraction;
+  CastleStatus status;
+  int regen;
+  int tick;
+  int maxWarriors;
 
   Castle();
   Castle(Vector2 pos, Color color, Fraction fraction);
 
   void Attack(std::vector<Warrior> &warriors);
+  void TakeDamage(Warrior &warrior);
   void AssignATarget(std::vector<Castle> &castles);
+  void Regen();
   void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors);
   void Draw();
 

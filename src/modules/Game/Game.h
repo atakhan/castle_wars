@@ -19,10 +19,13 @@ enum GameState {
 class Game {
 public:
   Fight fight;
-  Road road;
   GamePlayUi ui;
-  std::vector<Warrior> warriors;
+
+  std::vector<Road> roads;
+
   std::vector<Castle> castles;
+  std::vector<Warrior> warriors;
+
   std::vector<Milestone> path;
 
   Game();
