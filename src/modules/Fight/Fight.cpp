@@ -32,11 +32,11 @@ bool Fight::WarriorWarriorCollider(Warrior &warrior, Warrior &warrior2) {
   return false;  
 }
 
-void Fight::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors) {
+void Fight::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads) {
   for (auto castle = castles.begin(); castle != castles.end(); castle++) {
     for (auto warrior = warriors.begin(); warrior != warriors.end();) {
       if (WarriorCastleCollider(*warrior, *castle)) {
-        castle->TakeDamage(*warrior);
+        castle->TakeDamage(*warrior, roads);
         warrior = warriors.erase(warrior);
       } else {
         ++warrior;

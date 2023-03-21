@@ -3,7 +3,6 @@
 #include "Configs.h"
 #include "modules/Castle/Castle.h"
 #include "modules/Game/Game.h"
-#include "modules/Milestone/Milestone.h"
 #include "modules/Warrior/Warrior.h"
 #include "modules/Game/Game.h"
 
@@ -11,6 +10,10 @@
 #include <vector>
 #include <iterator>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: 
+//    - Make new module for control attacks, retreats, castle updates
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main() {
   int screenWidth = 1000;

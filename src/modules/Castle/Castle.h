@@ -2,6 +2,7 @@
 #define CASTLE_H
 
 #include "../Warrior/Warrior.h"
+#include "../Road/Road.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
 
@@ -19,21 +20,26 @@ public:
   int warriorsCount;
   Color color;
   Vector2 pos;
-  Vector2 target;
+  std::vector<Vector2> targets;
   Fraction fraction;
   CastleStatus status;
-  int regen;
-  int tick;
+  int regen_speed;
+  int regen_tick;
+  int attack_speed;
+  int attack_tick;
   int maxWarriors;
 
   Castle();
   Castle(Vector2 pos, Color color, Fraction fraction);
 
   void Attack(std::vector<Warrior> &warriors);
-  void TakeDamage(Warrior &warrior);
-  void AssignATarget(std::vector<Castle> &castles);
+  void ResetCastle(std::vector<Road> &roads);
+  void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
+  void AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
+  void CancelAttack(); // TODO
+  void HandleMouse(std::vector<Castle> &castles, std::vector<Road> &roads);
   void Regen();
-  void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors);
+  void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads);
   void Draw();
 
   static void DrawAll(std::vector<Castle> &castles) {
@@ -41,9 +47,9 @@ public:
       castle->Draw();
   }
   
-  static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors) {
+  static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads) {
     for(auto castle = castles.begin(); castle!=castles.end(); castle++)
-      castle->Update(castles, warriors);
+      castle->Update(castles, warriors, roads);
   }
 
 };

@@ -2,17 +2,17 @@
 #define ROAD_H
 
 #include "../../Configs.h"
-#include "../Milestone/Milestone.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
 
 class Road
 {
 public:
-  std::vector<Milestone> path;
+  std::vector<Vector2> path;
+  Color color;
 
   Road();
-  Road(std::vector<Milestone> path);
+  Road(std::vector<Vector2> path, Color color);
 
   void Draw();
 

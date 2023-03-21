@@ -26,8 +26,6 @@ public:
   std::vector<Castle> castles;
   std::vector<Warrior> warriors;
 
-  std::vector<Milestone> path;
-
   Game();
 
   void GenerateCastles();
