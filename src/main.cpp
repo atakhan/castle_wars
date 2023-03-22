@@ -11,8 +11,17 @@
 #include <iterator>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: 
+
+// DONE: 
 //    - Make new module for control attacks, retreats, castle updates
+//    - Deny to make more than 1 road to same enemy castle
+//    - delete target from castle targets after cancel attack
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO: 
+//    - Add update castle feature
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main() {
@@ -28,12 +37,12 @@ int main() {
 
   while (!window.ShouldClose()) {
       
-      game.Update();
+    game.Update();
 
-      BeginDrawing();
-        ClearBackground(CW_MAIN_BG);
-        game.Draw();
-      EndDrawing();
+    BeginDrawing();
+      ClearBackground(CW_MAIN_BG);
+      game.Draw();
+    EndDrawing();
 
   }
 

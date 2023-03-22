@@ -10,9 +10,10 @@ class Road
 public:
   std::vector<Vector2> path;
   Color color;
+  Fraction fraction;
 
   Road();
-  Road(std::vector<Vector2> path, Color color);
+  Road(std::vector<Vector2> path, Color color, Fraction fraction);
 
   void Draw();
 

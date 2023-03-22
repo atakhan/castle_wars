@@ -2,11 +2,11 @@
 #define GAME_H
 
 #include "../../Configs.h"
+#include "../Control/Control.h"
 #include "../Castle/Castle.h"
 #include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
 #include "../Fight/Fight.h"
-#include "../GamePlayUi/GamePlayUi.h"
 
 #include <raylib-cpp.hpp>
 
@@ -19,8 +19,7 @@ enum GameState {
 class Game {
 public:
   Fight fight;
-  GamePlayUi ui;
-
+  Control control;
   std::vector<Road> roads;
 
   std::vector<Castle> castles;
@@ -28,8 +27,6 @@ public:
 
   Game();
 
-  void GenerateCastles();
-  void GeneratePath();
   void DrawStats();
   void Draw();
   void Update();

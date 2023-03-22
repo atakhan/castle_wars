@@ -35,21 +35,21 @@ public:
   void Attack(std::vector<Warrior> &warriors);
   void ResetCastle(std::vector<Road> &roads);
   void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
+  bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
   void AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
-  void CancelAttack(); // TODO
-  void HandleMouse(std::vector<Castle> &castles, std::vector<Road> &roads);
+  void CancelAttack(Vector2 target);
   void Regen();
-  void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads);
+  void Update(std::vector<Warrior> &warriors);
   void Draw();
 
   static void DrawAll(std::vector<Castle> &castles) {
-    for(auto castle = castles.begin(); castle!=castles.end(); castle++)
+    for (auto castle = castles.begin(); castle!=castles.end(); castle++)
       castle->Draw();
   }
   
-  static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads) {
-    for(auto castle = castles.begin(); castle!=castles.end(); castle++)
-      castle->Update(castles, warriors, roads);
+  static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors) {
+    for (auto castle = castles.begin(); castle!=castles.end(); castle++)
+      castle->Update(warriors);
   }
 
 };

@@ -17,8 +17,7 @@ Castle::Castle(Vector2 _pos, Color _color, Fraction fraction_) {
   maxWarriors = 10;
 }
 
-void Castle::ResetCastle(std::vector<Road> &roads)
-{
+void Castle::ResetCastle(std::vector<Road> &roads) {
   for (auto road = roads.begin(); road != roads.end();) {
     if (abs(road->path[0].x - pos.x) < 1 && abs(road->path[0].y - pos.y) < 1) {
       road = roads.erase(road);
@@ -66,60 +65,67 @@ void Castle::Regen() {
   }
 }
 
+bool Castle::RoadIsset(Vector2 endPos, std::vector<Road> &roads)
+{
+  bool isset = false;
+  for (size_t i = 0; i < roads.size(); ++i) {
+    if (
+      (
+        (abs(roads[i].path[0].x - pos.x) < 1) &&
+        (abs(roads[i].path[0].y - pos.y) < 1) &&
+        (abs(roads[i].path[1].x - endPos.x) < 1) &&
+        (abs(roads[i].path[1].y - endPos.y) < 1)
+      ) || (
+        (abs(roads[i].path[1].x - pos.x) < 1) &&
+        (abs(roads[i].path[1].y - pos.y) < 1) &&
+        (abs(roads[i].path[0].x - endPos.x) < 1) &&
+        (abs(roads[i].path[0].y - endPos.y) < 1)
+      )
+    ) {
+      isset = true;
+    }
+  }
+  return isset;
+}
+
 void Castle::AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads) {
     // don't attack yourself!
     if (CheckCollisionPointCircle(mousePos, pos, radius)) {
       isCurrent = false;
       return;
     }
-    
+
     for (size_t i = 0; i < castles.size(); ++i) {
       if (CheckCollisionPointCircle(mousePos, castles[i].pos, castles[i].radius)) {
-        targets.push_back(castles[i].pos);
-        status = ATTACK;
-        roads.push_back(Road(std::vector<Vector2> { pos, castles[i].pos }, color));
-        break;
+        if (!RoadIsset(castles[i].pos, roads)) {
+          targets.push_back(castles[i].pos);
+          status = ATTACK;
+          roads.push_back(
+            Road(std::vector<Vector2> {pos, castles[i].pos}, color, fraction)
+          );
+          break;
+        }
       }
     }
     isCurrent = false;
 }
 
-// bool isIntersecting(Vector2& p1, Vector2& p2, Vector2& q1, Vector2& q2) {
-//     return (((q1.x - p1.x) * (p2.y - p1.y) - (q1.y - p1.y) * (p2.x - p1.x))
-//             * ((q2.x - p1.x) * (p2.y - p1.y) - (q2.y - p1.y) * (p2.x - p1.x)) < 0)
-//             &&
-//            (((p1.x - q1.x) * (q2.y - q1.y) - (p1.y - q1.y) * (q2.x - q1.x))
-//             * ((p2.x - q1.x) * (q2.y - q1.y) - (p2.y - q1.y) * (q2.x - q1.x)) < 0);
-// }
-
-// void Castle::CancelAttack() {}
-
-void Castle::HandleMouse(std::vector<Castle> &castles, std::vector<Road> &roads) {
-  Vector2 mousePos = GetMousePosition();
-
-  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    (CheckCollisionPointCircle(GetMousePosition(), pos, radius))
-      ? isCurrent = true
-      : isCurrent = false;
-  }
-
-  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    if (isCurrent) {
-      AssignATarget(mousePos, castles, roads);
-    } 
-    // else 
-    // {
-    //   CancelAttack();
-    // }
-    
+void Castle::CancelAttack(Vector2 target_) {
+  status = DEFENSE;
+  for(auto target = targets.begin(); target != targets.end();) {
+    if (
+      (abs(target->x - target_.x) < 1) &&
+      (abs(target->y - target_.y) < 1)
+    ) {
+      target = targets.erase(target);
+    } else {
+      target++;
+    }
   }
 }
 
-void Castle::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads) {
-  if (warriorsCount > 0) {
-    HandleMouse(castles, roads);
-    Attack(warriors);
-  }
+void Castle::Update(std::vector<Warrior> &warriors) {
+  Attack(warriors);
   Regen();
 }
 

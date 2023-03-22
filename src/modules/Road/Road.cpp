@@ -2,9 +2,10 @@
 
 Road::Road() {}
 
-Road::Road(std::vector<Vector2> path_, Color color_) {
+Road::Road(std::vector<Vector2> path_, Color color_, Fraction fraction_) {
   path = path_;
   color = color_;
+  fraction = fraction_;
 }
 
 void Road::Draw() {
