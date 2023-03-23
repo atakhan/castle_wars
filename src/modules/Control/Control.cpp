@@ -43,7 +43,7 @@ void Control::Update(std::vector<Castle> &castles, std::vector<Road> &roads) {
     if (isCastlePressed) {
       for (auto castle = castles.begin(); castle!=castles.end(); castle++) {
         if (castle->fraction == PLAYER && castle->isCurrent) {
-          castle->AssignATarget(mouseReleasedPos, castles, roads);
+          castle->TryToAssignATarget(mouseReleasedPos, castles, roads);
           isCastlePressed = false;
           break;
         } 

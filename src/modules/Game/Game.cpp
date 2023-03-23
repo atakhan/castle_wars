@@ -3,9 +3,9 @@
 Game::Game() {
   fight = Fight();
   control = Control();
-  castles.push_back(Castle({300, 300}, CW_BLUE, PLAYER));
-  castles.push_back(Castle({700, 800}, CW_RED, AI));
-  castles.push_back(Castle({550, 200}, CW_RED, AI));
+  castles.push_back(Castle({300, 300}, CW_BLUE, PLAYER, 3));
+  castles.push_back(Castle({700, 800}, CW_RED,  AI,     7));
+  castles.push_back(Castle({550, 200}, CW_RED,  AI,     0));
 }
 
 void Game::DrawStats() {

@@ -2,26 +2,33 @@
 
 Castle::Castle() {}
 
-Castle::Castle(Vector2 _pos, Color _color, Fraction fraction_) {
-  radius = 50.0f;
-  color = _color;
-  pos = _pos;
-  fraction = fraction_;
-  warriorsCount = 1;
-  isCurrent = false;
-  status = DEFENSE;
-  regen_speed = 80;
-  attack_speed = 100;
-  regen_tick = 0;
-  attack_tick = 0;
-  maxWarriors = 10;
+Castle::Castle(Vector2 pos_, Color color_, Fraction fraction_, int level_) : level(level_) {
+  fraction        = fraction_;
+  color           = color_;
+  pos             = pos_;
+  radius          = CalculateRadiusByLevel();
+  isCurrent       = false;
+  status          = DEFENSE;
+  warriorsCount   = 1;
+  regenTick       = 0;
+  attackTick      = 0;
+  GetLevelParameters();
 }
 
-void Castle::ResetCastle(std::vector<Road> &roads) {
+float Castle::CalculateRadiusByLevel() {
+  return 30.0f * (powf((level.current + 1), 0.5));
+}
+
+void Castle::GetLevelParameters() {
+  maxWarriors     = level.getCurrentMax();
+  regenSpeed      = level.getCurrentRegen();
+  attackFrequency = level.getCurrentAttackFrequency();
+}
+
+void Castle::RemoveActiveRoads(std::vector<Road> &roads) {
   for (auto road = roads.begin(); road != roads.end();) {
     if (abs(road->path[0].x - pos.x) < 1 && abs(road->path[0].y - pos.y) < 1) {
       road = roads.erase(road);
-      status = DEFENSE;
     } else {
       road++;
     }
@@ -37,30 +44,31 @@ void Castle::TakeDamage(Warrior &warrior, std::vector<Road> &roads) {
       fraction = warrior.fraction;
       color = warrior.color;
       warriorsCount = 1;
-      ResetCastle(roads);
+      status = DEFENSE;
+      RemoveActiveRoads(roads);
     }
   }
 }
 
 void Castle::Attack(std::vector<Warrior> &warriors) {
   if (warriorsCount > 0 && status == ATTACK) {
-    attack_tick++;
-    if (attack_tick > attack_speed) {
+    attackTick++;
+    if (attackTick > attackFrequency) {
       for (size_t i = 0; i < targets.size(); ++i) {
         warriors.push_back(Warrior(pos, targets[i], color, fraction));
         warriorsCount--;
       }
-      attack_tick = 0;
+      attackTick = 0;
     }
   }
 }
 
 void Castle::Regen() {
   if (warriorsCount < maxWarriors) {
-    regen_tick++;
-    if (regen_tick > regen_speed) {
+    regenTick++;
+    if (regenTick > regenSpeed) {
       warriorsCount++;
-      regen_tick = 0;
+      regenTick = 0;
     }
   }
 }
@@ -74,12 +82,14 @@ bool Castle::RoadIsset(Vector2 endPos, std::vector<Road> &roads)
         (abs(roads[i].path[0].x - pos.x) < 1) &&
         (abs(roads[i].path[0].y - pos.y) < 1) &&
         (abs(roads[i].path[1].x - endPos.x) < 1) &&
-        (abs(roads[i].path[1].y - endPos.y) < 1)
+        (abs(roads[i].path[1].y - endPos.y) < 1) &&
+        (roads[i].fraction == fraction)
       ) || (
         (abs(roads[i].path[1].x - pos.x) < 1) &&
         (abs(roads[i].path[1].y - pos.y) < 1) &&
         (abs(roads[i].path[0].x - endPos.x) < 1) &&
-        (abs(roads[i].path[0].y - endPos.y) < 1)
+        (abs(roads[i].path[0].y - endPos.y) < 1) &&
+        (roads[i].fraction == fraction)
       )
     ) {
       isset = true;
@@ -88,8 +98,8 @@ bool Castle::RoadIsset(Vector2 endPos, std::vector<Road> &roads)
   return isset;
 }
 
-void Castle::AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads) {
-    // don't attack yourself!
+void Castle::TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads) {
+    // don't attack own!
     if (CheckCollisionPointCircle(mousePos, pos, radius)) {
       isCurrent = false;
       return;
@@ -100,9 +110,7 @@ void Castle::AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::
         if (!RoadIsset(castles[i].pos, roads)) {
           targets.push_back(castles[i].pos);
           status = ATTACK;
-          roads.push_back(
-            Road(std::vector<Vector2> {pos, castles[i].pos}, color, fraction)
-          );
+          roads.push_back(Road(std::vector<Vector2> {pos, castles[i].pos}, color, fraction));
           break;
         }
       }

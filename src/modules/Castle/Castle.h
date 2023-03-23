@@ -3,8 +3,10 @@
 
 #include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
+#include "../Level/Level.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
+#include <math.h>
 
 enum CastleStatus {
   ATTACK,
@@ -14,30 +16,33 @@ enum CastleStatus {
 class Castle
 {
 public:
-  bool production;
-  bool isCurrent;
-  float radius;
-  int warriorsCount;
+  Level level;
+  Fraction fraction;
   Color color;
   Vector2 pos;
-  std::vector<Vector2> targets;
-  Fraction fraction;
+  float radius;
+  bool isCurrent;
   CastleStatus status;
-  int regen_speed;
-  int regen_tick;
-  int attack_speed;
-  int attack_tick;
+  std::vector<Vector2> targets;
+  int warriorsCount;
   int maxWarriors;
+  int regenSpeed;
+  int regenTick;
+  int attackFrequency;
+  int attackTick;
 
   Castle();
-  Castle(Vector2 pos, Color color, Fraction fraction);
+  Castle(Vector2 pos, Color color, Fraction fraction, int level);
+
+  void GetLevelParameters();
+  float CalculateRadiusByLevel();
 
   void Attack(std::vector<Warrior> &warriors);
-  void ResetCastle(std::vector<Road> &roads);
-  void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
-  bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
-  void AssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
+  void TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
   void CancelAttack(Vector2 target);
+  bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
+  void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
+  void RemoveActiveRoads(std::vector<Road> &roads);
   void Regen();
   void Update(std::vector<Warrior> &warriors);
   void Draw();
