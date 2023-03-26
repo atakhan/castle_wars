@@ -1,17 +1,14 @@
 #ifndef CASTLE_H
 #define CASTLE_H
 
+#include "../../Configs.h"
 #include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
 #include "../Level/Level.h"
+
 #include <raylib-cpp.hpp>
 #include <iostream>
 #include <math.h>
-
-enum CastleStatus {
-  ATTACK,
-  DEFENSE
-};
 
 class Castle
 {
@@ -20,9 +17,11 @@ public:
   Fraction fraction;
   Color color;
   Vector2 pos;
+  Vector2 menuPos;
   float radius;
+  float menuRadius;
   bool isCurrent;
-  CastleStatus status;
+  bool showMenu;
   std::vector<Vector2> targets;
   int warriorsCount;
   int maxWarriors;
@@ -39,19 +38,23 @@ public:
 
   void Attack(std::vector<Warrior> &warriors);
   void TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
-  void CancelAttack(Vector2 target);
+  void TryToCancelAttack(Vector2 target);
   bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
   void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
   void RemoveActiveRoads(std::vector<Road> &roads);
   void Regen();
+  void UpgradeCastle();
   void Update(std::vector<Warrior> &warriors);
+  void DrawCastle();
+  void DrawAttackPath();
+  void DrawMenu();
   void Draw();
 
   static void DrawAll(std::vector<Castle> &castles) {
     for (auto castle = castles.begin(); castle!=castles.end(); castle++)
       castle->Draw();
   }
-  
+
   static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors) {
     for (auto castle = castles.begin(); castle!=castles.end(); castle++)
       castle->Update(warriors);

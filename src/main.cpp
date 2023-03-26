@@ -16,11 +16,13 @@
 //    - Make new module for control attacks, retreats, castle updates
 //    - Deny to make more than 1 road to same enemy castle
 //    - delete target from castle targets after cancel attack
+//    - Fix bug: if one path deleted other path stop attack
+//    - Add update castle feature
+//    - Fix bug: in last level regen stopped
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO: 
-//    - Add update castle feature
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

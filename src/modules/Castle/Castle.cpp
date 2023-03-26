@@ -7,9 +7,11 @@ Castle::Castle(Vector2 pos_, Color color_, Fraction fraction_, int level_) : lev
   color           = color_;
   pos             = pos_;
   radius          = CalculateRadiusByLevel();
+  menuPos         = {pos_.x - radius, pos_.y + radius};
+  menuRadius      = 30.0f;
   isCurrent       = false;
-  status          = DEFENSE;
-  warriorsCount   = 1;
+  showMenu        = false;
+  warriorsCount   = 8;
   regenTick       = 0;
   attackTick      = 0;
   GetLevelParameters();
@@ -44,14 +46,14 @@ void Castle::TakeDamage(Warrior &warrior, std::vector<Road> &roads) {
       fraction = warrior.fraction;
       color = warrior.color;
       warriorsCount = 1;
-      status = DEFENSE;
+      targets = std::vector<Vector2>();
       RemoveActiveRoads(roads);
     }
   }
 }
 
 void Castle::Attack(std::vector<Warrior> &warriors) {
-  if (warriorsCount > 0 && status == ATTACK) {
+  if (warriorsCount > 0 && targets.size() > 0) {
     attackTick++;
     if (attackTick > attackFrequency) {
       for (size_t i = 0; i < targets.size(); ++i) {
@@ -99,17 +101,10 @@ bool Castle::RoadIsset(Vector2 endPos, std::vector<Road> &roads)
 }
 
 void Castle::TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads) {
-    // don't attack own!
-    if (CheckCollisionPointCircle(mousePos, pos, radius)) {
-      isCurrent = false;
-      return;
-    }
-
     for (size_t i = 0; i < castles.size(); ++i) {
       if (CheckCollisionPointCircle(mousePos, castles[i].pos, castles[i].radius)) {
         if (!RoadIsset(castles[i].pos, roads)) {
           targets.push_back(castles[i].pos);
-          status = ATTACK;
           roads.push_back(Road(std::vector<Vector2> {pos, castles[i].pos}, color, fraction));
           break;
         }
@@ -118,8 +113,7 @@ void Castle::TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, 
     isCurrent = false;
 }
 
-void Castle::CancelAttack(Vector2 target_) {
-  status = DEFENSE;
+void Castle::TryToCancelAttack(Vector2 target_) {
   for(auto target = targets.begin(); target != targets.end();) {
     if (
       (abs(target->x - target_.x) < 1) &&
@@ -132,16 +126,48 @@ void Castle::CancelAttack(Vector2 target_) {
   }
 }
 
+void Castle::UpgradeCastle() {
+  if (
+    CheckCollisionPointCircle(GetMousePosition(), menuPos, menuRadius) &&
+    IsMouseButtonPressed(MOUSE_BUTTON_LEFT)
+  ) {
+    if (warriorsCount >= level.getNextLevelCost() && level.current < 8) {
+      warriorsCount = warriorsCount - level.getNextLevelCost();
+      level.current++;
+      radius = CalculateRadiusByLevel();
+      menuPos = {pos.x - radius, pos.y + radius};
+      GetLevelParameters();
+    }
+  }
+}
+
 void Castle::Update(std::vector<Warrior> &warriors) {
+  UpgradeCastle();
   Attack(warriors);
   Regen();
 }
 
-void Castle::Draw() {
+void Castle::DrawCastle() {
   DrawCircle(pos.x, pos.y, radius, color);
+  std::string warriorsCount_text = std::to_string(warriorsCount);
+  raylib::DrawText(warriorsCount_text, pos.x, pos.y, 20, WHITE);
+}
+
+void Castle::DrawAttackPath() {
   if (isCurrent) {
     DrawLineEx(pos, GetMousePosition(), 4.0, color);
   }
-  std::string warriorsCount_text = std::to_string(warriorsCount);
-  raylib::DrawText(warriorsCount_text, pos.x, pos.y, 20, WHITE);
+}
+
+void Castle::DrawMenu() {
+  if (showMenu && level.current < 7) {
+    DrawCircle(menuPos.x, menuPos.y, menuRadius, ColorAlpha(DARKGREEN, 0.85));
+    DrawTextPro(GetFontDefault(), "UP", {menuPos.x - 8.0f, menuPos.y - 8.0f}, {0,0}, 0.0f, 16.0f, 3.0, WHITE);
+  }
+}
+
+void Castle::Draw() {
+  DrawCastle();
+  DrawAttackPath();
+  DrawMenu();
 }
