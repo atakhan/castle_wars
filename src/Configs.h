@@ -10,7 +10,15 @@
 
 enum Fraction {
     PLAYER,
-    AI
+    AI,
+    NEUTRAL
+};
+
+enum GameState {
+  GAME_MENU_STATE,
+  GAME_PLAY_STATE,
+  GAME_WIN_STATE,
+  GAME_OVER_STATE
 };
 
 #endif  // CONFIGS_H

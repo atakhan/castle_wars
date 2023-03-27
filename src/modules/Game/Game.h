@@ -7,29 +7,26 @@
 #include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
 #include "../Fight/Fight.h"
+#include "../Menu/Menu.h"
 
 #include <raylib-cpp.hpp>
 
-enum GameState {
-  GAME_MENU_STATE,
-  GAME_PLAY_STATE,
-  GAME_OVER_STATE
-};
-
 class Game {
 public:
+  GameState gameState;
   Fight fight;
   Control control;
+  Menu menu;
   std::vector<Road> roads;
-
   std::vector<Castle> castles;
   std::vector<Warrior> warriors;
 
   Game();
 
+  void Update();
+  
   void DrawStats();
   void Draw();
-  void Update();
 
 };
 

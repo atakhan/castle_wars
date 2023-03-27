@@ -66,7 +66,7 @@ void Castle::Attack(std::vector<Warrior> &warriors) {
 }
 
 void Castle::Regen() {
-  if (warriorsCount < maxWarriors) {
+  if (fraction != NEUTRAL && warriorsCount < maxWarriors) {
     regenTick++;
     if (regenTick > regenSpeed) {
       warriorsCount++;
@@ -162,7 +162,8 @@ void Castle::DrawAttackPath() {
 void Castle::DrawMenu() {
   if (showMenu && level.current < 7) {
     DrawCircle(menuPos.x, menuPos.y, menuRadius, ColorAlpha(DARKGREEN, 0.85));
-    DrawTextPro(GetFontDefault(), "UP", {menuPos.x - 8.0f, menuPos.y - 8.0f}, {0,0}, 0.0f, 16.0f, 3.0, WHITE);
+    std::string updateCost = std::to_string(level.getNextLevelCost());
+    raylib::DrawText(updateCost, menuPos.x - 8.0f, menuPos.y - 8.0f, 12.0f, WHITE);
   }
 }
 
