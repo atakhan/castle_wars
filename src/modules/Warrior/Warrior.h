@@ -31,17 +31,6 @@ public:
 
   void Update();
   void Draw();
-
-  static void UpdateAll(std::vector<Warrior> &warriors) {
-    for(auto warrior = warriors.begin(); warrior != warriors.end(); warrior++)
-      warrior->Update();
-  }
-
-  static void DrawAll(std::vector<Warrior> &warriors) {
-    for(auto warrior = warriors.begin(); warrior != warriors.end(); warrior++)
-      warrior->Draw();
-  }
-
 };
 
 }  // namespace CW

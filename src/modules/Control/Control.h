@@ -2,7 +2,7 @@
 #define CONTROL_H
 
 #include "../../Configs.h"
-#include "../Castle/Castle.h"
+#include "../Game/GameObjects.h"
 #include "../Road/Road.h"
 #include <raylib-cpp.hpp>
 #include <iostream>
@@ -14,10 +14,10 @@ class Control
  public:  
   Control();
   
-  void LookForAnAttackingCastle(std::vector<Castle> &castles, std::vector<Road> &roads);
-  void CheckCastlePressed(std::vector<Castle> &castles);
-  void CancelAttack(std::vector<Castle> &castles, std::vector<Road> &roads, Vector2 mousePressedPos, Vector2 mouseReleasedPos);
-  void Update(std::vector<Castle> &castles, std::vector<Road> &roads);
+  void LookForAnAttackingCastle(GameObjects *objects);
+  void CheckCastlePressed(GameObjects *objects);
+  void CancelAttack(GameObjects *objects, Vector2 mousePressedPos, Vector2 mouseReleasedPos);
+  void Update(GameObjects *objects);
   void Draw();
 
   static bool isIntersecting(Vector2& p1, Vector2& p2, Vector2& q1, Vector2& q2) {

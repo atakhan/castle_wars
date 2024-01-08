@@ -5,16 +5,16 @@ namespace CW {
 
 bool Fight::WarriorCastleCollider(Warrior &warrior, Castle &castle) {
   if (fabs(
-    (warrior.homeCastle.x - castle.pos.x) * (warrior.homeCastle.x - castle.pos.x) + 
-    (warrior.homeCastle.y - castle.pos.y) * (warrior.homeCastle.y - castle.pos.y) 
+    (warrior.homeCastle.x - castle.GetPosition().x) * (warrior.homeCastle.x - castle.GetPosition().x) + 
+    (warrior.homeCastle.y - castle.GetPosition().y) * (warrior.homeCastle.y - castle.GetPosition().y) 
   ) > (
-    (warrior.radius + castle.radius) * (warrior.radius + castle.radius)
+    (warrior.radius + castle.GetRadius()) * (warrior.GetRadius() + castle.GetRadius())
   )) {
     return fabs(
-      (warrior.pos.x - castle.pos.x) * (warrior.pos.x - castle.pos.x) + 
-      (warrior.pos.y - castle.pos.y) * (warrior.pos.y - castle.pos.y) 
+      (warrior.GetPosition().x - castle.GetPosition().x) * (warrior.GetPosition().x - castle.GetPosition().x) + 
+      (warrior.GetPosition().y - castle.GetPosition().y) * (warrior.GetPosition().y - castle.GetPosition().y) 
     ) <= (
-      (warrior.radius + castle.radius) * (warrior.radius + castle.radius)
+      (warrior.GetRadius() + castle.GetRadius()) * (warrior.GetRadius() + castle.GetRadius())
     );
   }
 
@@ -34,12 +34,12 @@ bool Fight::WarriorWarriorCollider(Warrior &warrior, Warrior &warrior2) {
   return false;  
 }
 
-void Fight::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads) {
-  for (auto castle = castles.begin(); castle != castles.end(); castle++) {
-    for (auto warrior = warriors.begin(); warrior != warriors.end();) {
+void Fight::Update(GameObjects *objects) {
+  for (auto castle = objects->GetCastles().begin(); castle != objects->GetCastles().end(); castle++) {
+    for (auto warrior = objects->GetWarriors().begin(); warrior != objects->GetWarriors().end();) {
       if (WarriorCastleCollider(*warrior, *castle)) {
-        castle->TakeDamage(*warrior, roads);
-        warrior = warriors.erase(warrior);
+        castle->TakeDamage(*warrior, objects->GetRoads());
+        warrior = objects->GetWarriors().erase(warrior);
       } else {
         ++warrior;
       }
@@ -47,17 +47,17 @@ void Fight::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors,
   }
 
   bool isErased = false;
-  for (auto warrior = warriors.begin(); warrior != warriors.end();) {
-    for (auto warrior2 = warriors.begin(); warrior2 != warriors.end();) {
+  for (auto warrior = objects->GetWarriors().begin(); warrior != objects->GetWarriors().end();) {
+    for (auto warrior2 = objects->GetWarriors().begin(); warrior2 != objects->GetWarriors().end();) {
       if (WarriorWarriorCollider(*warrior, *warrior2)) {
-        warrior2 = warriors.erase(warrior2);
+        warrior2 = objects->GetWarriors().erase(warrior2);
         isErased = true;
       } else {
         ++warrior2;
       }
     }
     if (isErased) {
-      warrior = warriors.erase(warrior);
+      warrior = objects->GetWarriors().erase(warrior);
     } else {
       warrior++;
       isErased = false;

@@ -38,16 +38,6 @@ class Castle {
   void UpdateParameters();
   void Update(std::vector<Warrior> &warriors);
   void Draw();
-
-  static void DrawAll(std::vector<Castle> &castles) {
-    for (auto castle = castles.begin(); castle!=castles.end(); castle++)
-      castle->Draw();
-  }
-
-  static void UpdateAll(std::vector<Castle> &castles, std::vector<Warrior> &warriors) {
-    for (auto castle = castles.begin(); castle!=castles.end(); castle++)
-      castle->Update(warriors);
-  }
  
  private:
   std::vector<Vector2> targets_;

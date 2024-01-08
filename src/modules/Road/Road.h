@@ -18,11 +18,6 @@ public:
   Road(std::vector<Vector2> path, Color color, Fraction fraction);
 
   void Draw();
-
-  static void DrawAll(std::vector<Road> &roads) {
-    for(auto road = roads.begin(); road!=roads.end(); road++)
-      road->Draw();
-  }
 };
 
 }  // namespace CW
