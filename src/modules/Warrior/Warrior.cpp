@@ -1,5 +1,7 @@
 #include "Warrior.h"
 
+namespace CW {
+
 Warrior::Warrior() {}
 
 Warrior::Warrior(Vector2 pos_, Vector2 targetPos, Color color_, Fraction fraction_) {
@@ -50,3 +52,5 @@ void Warrior::Draw() {
     color
   );
 }
+
+}  // namespace CW

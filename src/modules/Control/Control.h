@@ -7,14 +7,11 @@
 #include <raylib-cpp.hpp>
 #include <iostream>
 
+namespace CW {
+
 class Control
 {
- public:
-  Vector2 mousePressedPos;
-  Vector2 mouseReleasedPos;
-  bool isHatching;
-  bool isCastlePressed;
-  
+ public:  
   Control();
   
   void LookForAnAttackingCastle(std::vector<Castle> &castles, std::vector<Road> &roads);
@@ -32,6 +29,14 @@ class Control
       * ((p2.x - q1.x) * (q2.y - q1.y) - (p2.y - q1.y) * (q2.x - q1.x)) < 0)
     );
   }
+
+ private:
+  Vector2 mouse_pressed_position_;
+  Vector2 mouse_released_position_;
+  bool is_hatching_;
+  bool is_castle_pressed_;
 };
+
+}  // namespace CW
 
 #endif  // CONTROL_H

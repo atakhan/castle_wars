@@ -1,14 +1,12 @@
+#include <vector>
+#include <iterator>
+
 #include <raylib-cpp.hpp>
 
 #include "Configs.h"
 #include "modules/Castle/Castle.h"
 #include "modules/Game/Game.h"
 #include "modules/Warrior/Warrior.h"
-#include "modules/Game/Game.h"
-
-#include <iostream>
-#include <vector>
-#include <iterator>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,27 +24,33 @@
 
 // TODO:
 //    - Add maps
+//    - Make regen stop if castle attacked 
+//    - Make castle state view (idle, attack, defense)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int main() {
-  int screenWidth = 1000;
-  int screenHeight = 1200;
+int main()
+{ 
+  CW::Game game = CW::Game(
+    1000, 1200, 
+    "Castle Wars 0.1",
+    {
+      {0,  12, 80, 40},
+      {6,  24, 70, 35},
+      {12, 48, 60, 30},
+      {24, 96, 50, 25},
+    }
+  );
 
-  raylib::Color textColor(LIGHTGRAY);
-  raylib::Window window(screenWidth, screenHeight, "Castle Wars");
-  
   SetTargetFPS(60);
 
-  Game game = Game();
-
-  while (!window.ShouldClose()) {
-      
+  while (!game.WindowShouldClose())
+  {    
     game.Update();
 
     BeginDrawing();
-      ClearBackground(CW_MAIN_BG);
-      game.Draw();
+    ClearBackground(CW_MAIN_BG);
+    game.Draw();
     EndDrawing();
 
   }

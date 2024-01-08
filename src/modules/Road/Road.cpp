@@ -1,5 +1,7 @@
 #include "Road.h"
 
+namespace CW {
+
 Road::Road() {}
 
 Road::Road(std::vector<Vector2> path_, Color color_, Fraction fraction_) {
@@ -15,3 +17,5 @@ void Road::Draw() {
     }
   }
 }
+
+}  // namespace CW

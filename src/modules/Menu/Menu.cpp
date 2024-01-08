@@ -1,5 +1,7 @@
 #include "Menu.h"
 
+namespace CW {
+
 Menu::Menu() {
   startGameBtn = { 
     GetScreenWidth() / 2.0f, 
@@ -15,12 +17,15 @@ Menu::Menu() {
 }
 
 void Menu::Update(GameState &gameState) {
+  // start game btn
   if (CheckCollisionPointRec(GetMousePosition(), startGameBtn)) {
     hoverRec = startGameBtn;
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
       gameState = GAME_PLAY_STATE;
     }
   }
+
+  // exit game btn
   if (CheckCollisionPointRec(GetMousePosition(), exitGameBtn)) {
     hoverRec = exitGameBtn;
   }
@@ -43,3 +48,5 @@ void Menu::Draw() {
     {0.0f, 0.0f}, 0.0f, 40.0f, 8.0f, CW_BLUE
   );
 }
+
+}  // namespace CW

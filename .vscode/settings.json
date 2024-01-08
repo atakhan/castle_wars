@@ -78,5 +78,6 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "__functional_03": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": true
 }

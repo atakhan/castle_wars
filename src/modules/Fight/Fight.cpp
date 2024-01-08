@@ -1,6 +1,8 @@
 #include "Fight.h"
 #include <iostream>
 
+namespace CW {
+
 bool Fight::WarriorCastleCollider(Warrior &warrior, Castle &castle) {
   if (fabs(
     (warrior.homeCastle.x - castle.pos.x) * (warrior.homeCastle.x - castle.pos.x) + 
@@ -63,3 +65,5 @@ void Fight::Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors,
   }
 
 }
+
+}  // namespace CW

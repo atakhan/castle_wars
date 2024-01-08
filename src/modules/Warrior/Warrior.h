@@ -7,6 +7,8 @@
 #include <iostream>
 #include <limits>
 
+namespace CW {
+
 class Warrior
 {
 public:
@@ -41,5 +43,7 @@ public:
   }
 
 };
+
+}  // namespace CW
 
 #endif  // WARRIOR_H

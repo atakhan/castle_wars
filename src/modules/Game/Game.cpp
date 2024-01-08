@@ -1,14 +1,25 @@
 #include "Game.h"
 
-Game::Game() {
-  gameState = GAME_MENU_STATE;
-  fight = Fight();
-  control = Control();
-  menu = Menu();
-  castles.push_back(Castle({300, 300}, CW_BLUE, PLAYER,  0));
-  castles.push_back(Castle({700, 800}, CW_RED,  AI,      7));
-  castles.push_back(Castle({550, 200}, CW_RED,  AI,      0));
-  castles.push_back(Castle({150, 100}, GRAY,    NEUTRAL, 1));
+namespace CW {
+
+Game::Game(int w, int h, const std::string& title, const std::vector<std::vector<int>> &rules) 
+    : window_(new raylib::Window(w, h, title))
+    , screen_width_(w)
+    , screen_height_(h)
+    , fight_(new Fight())
+    , control_(new Control())
+    , menu_(new Menu())
+    , rules_(rules)
+{
+  game_state_ = GAME_MENU_STATE;
+  castles_.push_back(Castle({300, 300}, CW_BLUE, PLAYER,  0));
+  castles_.push_back(Castle({700, 800}, CW_RED,  AI,      3));
+  castles_.push_back(Castle({550, 200}, CW_RED,  AI,      0));
+  castles_.push_back(Castle({150, 100}, GRAY,    NEUTRAL, 1));
+}
+
+bool Game::WindowShouldClose() {
+  return window_->ShouldClose();
 }
 
 void Game::DrawStats() {
@@ -16,34 +27,26 @@ void Game::DrawStats() {
 }
 
 void Game::Update() {
-  
-  if (gameState == GAME_PLAY_STATE) {
-
-    control.Update(castles, roads);
-    fight.Update(castles, warriors, roads);
-    Castle::UpdateAll(castles, warriors);
-    Warrior::UpdateAll(warriors);
-
-  } else if (gameState == GAME_MENU_STATE) {
-
-    menu.Update(gameState);
-
+  if (game_state_ == GAME_PLAY_STATE) {
+    control_->Update(castles_, roads_);
+    fight_->Update(castles_, warriors_, roads_);
+    Castle::UpdateAll(castles_, warriors_);
+    Warrior::UpdateAll(warriors_);
+  } else if (game_state_ == GAME_MENU_STATE) {
+    menu_->Update(game_state_);
   }
 }
 
 void Game::Draw() {
-  
-  if (gameState == GAME_PLAY_STATE) {
-
+  if (game_state_ == GAME_PLAY_STATE) {
     DrawStats();
-    Road::DrawAll(roads);
-    Castle::DrawAll(castles);
-    Warrior::DrawAll(warriors);
-    control.Draw();
-  
-  } else if (gameState == GAME_MENU_STATE) {
-  
-    menu.Draw();
-  
+    Road::DrawAll(roads_);
+    Castle::DrawAll(castles_);
+    Warrior::DrawAll(warriors_);
+    control_->Draw();
+  } else if (game_state_ == GAME_MENU_STATE) {
+    menu_->Draw();
   }
 }
+
+}  // namespace CW

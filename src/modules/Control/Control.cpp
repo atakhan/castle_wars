@@ -1,15 +1,17 @@
 #include "Control.h"
 
+namespace CW {
+
 Control::Control() {
-  isHatching = false;
-  isCastlePressed = false;
+  is_hatching_ = false;
+  is_castle_pressed_ = false;
 }
 
-void Control::CancelAttack(std::vector<Castle> &castles, std::vector<Road> &roads, Vector2 mousePressedPos, Vector2 mouseReleasedPos) {
+void Control::CancelAttack(std::vector<Castle> &castles, std::vector<Road> &roads, Vector2 mouse_pressed_position, Vector2 mouse_released_position) {
   for (auto road = roads.begin(); road!=roads.end();) {    
-    if (road->fraction == PLAYER && Control::isIntersecting(road->path[0], road->path[1], mousePressedPos, mouseReleasedPos)) {
+    if (road->fraction == PLAYER && Control::isIntersecting(road->path[0], road->path[1], mouse_pressed_position, mouse_released_position)) {
       for (auto castle = castles.begin(); castle!=castles.end(); castle++) {
-        if (abs(road->path[0].x - castle->pos.x) < 1 && abs(road->path[0].y - castle->pos.y) < 1) {
+        if (abs(road->path[0].x - castle->GetPosition().x) < 1 && abs(road->path[0].y - castle->GetPosition().y) < 1) {
           castle->TryToCancelAttack(road->path[1]);
         }
       }
@@ -22,34 +24,34 @@ void Control::CancelAttack(std::vector<Castle> &castles, std::vector<Road> &road
 
 void Control::CheckCastlePressed(std::vector<Castle> &castles) {
   for (auto castle = castles.begin(); castle!=castles.end(); castle++) {
-    if (castle->fraction == PLAYER) {
-      if (CheckCollisionPointCircle(mousePressedPos, castle->pos, castle->radius)) {
-        castle->isCurrent = true;
-        isCastlePressed = true;
+    if (castle->GetFraction() == PLAYER) {
+      if (CheckCollisionPointCircle(mouse_pressed_position_, castle->GetPosition(), castle->GetRadius())) {
+        castle->is_current_ = true;
+        is_castle_pressed_ = true;
         break;
       } else {
-        castle->isCurrent = false;
+        castle->is_current_ = false;
         castle->showMenu = false;
       }
     }
   }
-  if (!isCastlePressed) {
-    isHatching = true;
+  if (!is_castle_pressed_) {
+    is_hatching_ = true;
   }
 }
   
 void Control::LookForAnAttackingCastle(std::vector<Castle> &castles, std::vector<Road> &roads) {
   for (auto castle = castles.begin(); castle!=castles.end(); castle++) {
-    if (castle->fraction == PLAYER && castle->isCurrent) {
+    if (castle->GetFraction() == PLAYER && castle->is_current_) {
       // show menu
-      if (CheckCollisionPointCircle(mouseReleasedPos, castle->pos, castle->radius)) {
-        castle->isCurrent = false;
+      if (CheckCollisionPointCircle(mouse_released_position_, castle->GetPosition(), castle->GetRadius())) {
+        castle->is_current_ = false;
         castle->showMenu = true;
       // assign a target
       } else {
-        castle->TryToAssignATarget(mouseReleasedPos, castles, roads);
+        castle->TryToAssignATarget(mouse_released_position_, castles, roads);
       }
-      isCastlePressed = false;
+      is_castle_pressed_ = false;
       break;
     } 
   }
@@ -57,22 +59,24 @@ void Control::LookForAnAttackingCastle(std::vector<Castle> &castles, std::vector
 
 void Control::Update(std::vector<Castle> &castles, std::vector<Road> &roads) {
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {  
-    mousePressedPos = GetMousePosition();
+    mouse_pressed_position_ = GetMousePosition();
     CheckCastlePressed(castles);
   }
   if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
-    mouseReleasedPos = GetMousePosition();
-    if (isCastlePressed) {
+    mouse_released_position_ = GetMousePosition();
+    if (is_castle_pressed_) {
       LookForAnAttackingCastle(castles, roads);
     } else {
-      isHatching = false;
-      CancelAttack(castles, roads, mousePressedPos, mouseReleasedPos);
+      is_hatching_ = false;
+      CancelAttack(castles, roads, mouse_pressed_position_, mouse_released_position_);
     }
   }
 }
 
 void Control::Draw() {
-  if (isHatching) {
-    DrawLineEx(mousePressedPos, GetMousePosition(), 10.0f, GREEN);
+  if (is_hatching_) {
+    DrawLineEx(mouse_pressed_position_, GetMousePosition(), 10.0f, GREEN);
   }
 }
+
+}  // namespace CW

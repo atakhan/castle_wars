@@ -5,6 +5,8 @@
 #include <raylib-cpp.hpp>
 #include <iostream>
 
+namespace CW {
+
 class Road
 {
 public:
@@ -22,5 +24,7 @@ public:
       road->Draw();
   }
 };
+
+}  // namespace CW
 
 #endif  // ROAD_H

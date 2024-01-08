@@ -7,6 +7,8 @@
 #include "../Road/Road.h"
 #include <raylib-cpp.hpp>
 
+namespace CW {
+
 class Fight
 {
 public:
@@ -14,5 +16,7 @@ public:
   bool WarriorWarriorCollider(Warrior &warrior, Warrior &warrior2);
   void Update(std::vector<Castle> &castles, std::vector<Warrior> &warriors, std::vector<Road> &roads);
 };
+
+}  // namespace CW
 
 #endif  // FIGHT_H
