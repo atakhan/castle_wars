@@ -5,10 +5,10 @@ namespace CW {
 
 bool Fight::WarriorCastleCollider(Warrior &warrior, Castle &castle) {
   if (fabs(
-    (warrior.homeCastle.x - castle.GetPosition().x) * (warrior.homeCastle.x - castle.GetPosition().x) + 
-    (warrior.homeCastle.y - castle.GetPosition().y) * (warrior.homeCastle.y - castle.GetPosition().y) 
+    (warrior.GetHomeCastlePosition().x - castle.GetPosition().x) * (warrior.GetHomeCastlePosition().x - castle.GetPosition().x) + 
+    (warrior.GetHomeCastlePosition().y - castle.GetPosition().y) * (warrior.GetHomeCastlePosition().y - castle.GetPosition().y) 
   ) > (
-    (warrior.radius + castle.GetRadius()) * (warrior.GetRadius() + castle.GetRadius())
+    (warrior.GetRadius() + castle.GetRadius()) * (warrior.GetRadius() + castle.GetRadius())
   )) {
     return fabs(
       (warrior.GetPosition().x - castle.GetPosition().x) * (warrior.GetPosition().x - castle.GetPosition().x) + 
@@ -22,12 +22,12 @@ bool Fight::WarriorCastleCollider(Warrior &warrior, Castle &castle) {
 }
 
 bool Fight::WarriorWarriorCollider(Warrior &warrior, Warrior &warrior2) {
-  if (warrior.fraction != warrior2.fraction) {
+  if (warrior.GetFraction() != warrior2.GetFraction()) {
     return fabs(
-      (warrior.pos.x - warrior2.pos.x) * (warrior.pos.x - warrior2.pos.x) + 
-      (warrior.pos.y - warrior2.pos.y) * (warrior.pos.y - warrior2.pos.y) 
+      (warrior.GetPosition().x - warrior2.GetPosition().x) * (warrior.GetPosition().x - warrior2.GetPosition().x) + 
+      (warrior.GetPosition().y - warrior2.GetPosition().y) * (warrior.GetPosition().y - warrior2.GetPosition().y) 
     ) <= (
-      (warrior.radius + warrior2.radius) * (warrior.radius + warrior2.radius)
+      (warrior.GetRadius() + warrior2.GetRadius()) * (warrior.GetRadius() + warrior2.GetRadius())
     );
   }
 

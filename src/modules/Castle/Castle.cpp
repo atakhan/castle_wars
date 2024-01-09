@@ -4,7 +4,7 @@ namespace CW {
 
 Castle::Castle() {}
 
-Castle::Castle(Vector2 pos, Color color, Fraction fraction, int level) 
+Castle::Castle(Vector2 pos, Color color, Fraction fraction, CastleLevel *level) 
     : level_(level)
     , menu_(new CastleMenu(pos, level))
     , fraction_(fraction)
@@ -13,6 +13,7 @@ Castle::Castle(Vector2 pos, Color color, Fraction fraction, int level)
     , attack_tick_(0)
     , is_current_(false)
     , warriors_count_(8)
+    , color_(color)
 {
   UpdateParameters();
 }
@@ -26,13 +27,13 @@ void Castle::Update(std::vector<Warrior> &warriors) {
 void Castle::Draw() {
   DrawCastle();
   DrawAttackPath();
-  if (menu_->Show() && level_.GetCurrentLevel() < level_.GetMaxLevel()) {  // TODO: set max level instead of 7
+  if (menu_->Show() && level_->GetCurrentLevel() < level_->GetMaxLevel()) {  // TODO: set max level instead of 7
     menu_->Draw();
   }
 }
 
 int Castle::GetCurrentLevel() {
-  return level_.GetCurrentLevel();
+  return level_->GetCurrentLevel();
 }
 
 int Castle::GetRadius() {
@@ -48,40 +49,42 @@ Vector2 Castle::GetPosition() {
 }
 
 float Castle::CalculateRadiusByLevel() {
-  return 30.0f * (powf((level_.GetCurrentLevel() + 1), 0.5));
+  return 30.0f * (powf((level_->GetCurrentLevel() + 1), 0.5));
 }
 
 int Castle::GetNextLevelCost() {
-  return level_.GetNextLevelCost();
+  return level_->GetNextLevelCost();
+}
+
+void Castle::SetMenuVisible(bool value) {
+  menu_->SetVisible(value);
 }
 
 void Castle::Upgrade() {
   if (!menu_->UpgradeCastle()) {
     return;
   }
-  if (warriors_count_ < level_.GetNextLevelCost()) {
+  if (warriors_count_ < level_->GetNextLevelCost()) {
     return;
   } 
-  if (level_.GetCurrentLevel() >= 7) {
+  if (level_->GetCurrentLevel() >= 7) {
     return;
   }
-
-  warriors_count_ = warriors_count_ - level_.GetNextLevelCost();
-  level_.SetCurrentLevel(level_.GetCurrentLevel() + 1);
-  position_ = {position_.x - radius_, position_.y + radius_};
+  warriors_count_ = warriors_count_ - level_->GetNextLevelCost();
+  level_->SetCurrentLevel(level_->GetCurrentLevel() + 1);
   UpdateParameters();
 }
 
 void Castle::UpdateParameters() {
   radius_           = CalculateRadiusByLevel();
-  max_warriors_     = level_.GetCurrentMax();
-  regen_speed_      = level_.GetCurrentRegen();
-  attack_frequency_ = level_.GetCurrentAttackFrequency();
+  max_warriors_     = level_->GetCurrentMax();
+  regen_speed_      = level_->GetCurrentRegen();
+  attack_frequency_ = level_->GetCurrentAttackFrequency();
 }
 
-void Castle::ChangeFraction(const Warrior &warrior, std::vector<Road> &roads) {
-  fraction_ = warrior.fraction;
-  color_ = warrior.color;
+void Castle::ChangeFraction(Warrior &warrior, std::vector<Road> &roads) {
+  fraction_ = warrior.GetFraction();
+  color_ = warrior.GetColor();
   warriors_count_ = 1;
   targets_.clear();
   RemoveActiveRoads(roads);
@@ -98,7 +101,7 @@ void Castle::RemoveActiveRoads(std::vector<Road> &roads) {
 }
 
 void Castle::TakeDamage(Warrior &warrior, std::vector<Road> &roads) {
-  if (fraction_ == warrior.fraction) {
+  if (fraction_ == warrior.GetFraction()) {
     warriors_count_++;
   } else {
     warriors_count_--;

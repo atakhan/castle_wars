@@ -2,30 +2,33 @@
 
 namespace CW {
 
-CastleLevel::CastleLevel(int level) : current_(level) {}
+CastleLevel::CastleLevel(int level, RulesBook *rules) 
+    : current_(level)
+    , rules_(rules)
+{}
 
 int CastleLevel::GetCurrentLevel() {
   return current_;
 }
 
 int CastleLevel::GetNextLevelCost() {
-  return rules_[current_+1][LEVEL_COST];
+  return rules_->GetLevelRules(current_ + 1).at(LEVEL_COST);
 }
 
 int CastleLevel::GetCurrentMax() {
-  return rules_[current_][LEVEL_MAX_UNIT];
+  return rules_->GetLevelRules(current_).at(LEVEL_MAX_UNIT);
 }
 
 int CastleLevel::GetCurrentRegen() {
-  return rules_[current_][LEVEL_REGEN];
+  return rules_->GetLevelRules(current_).at(LEVEL_REGEN);
 }
 
 int CastleLevel::GetCurrentAttackFrequency() {
-  return rules_[current_][LEVEL_ATTACK_FREQUENCY];
+  return rules_->GetLevelRules(current_).at(LEVEL_ATTACK_FREQUENCY);
 }
 
 int CastleLevel::GetMaxLevel() {
-  return rules_.size();
+  return rules_->GetMaxLevel();
 }
 
 void CastleLevel::SetCurrentLevel(int new_level) {

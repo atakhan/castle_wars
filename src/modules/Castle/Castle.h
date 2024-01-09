@@ -18,13 +18,14 @@ class Castle {
   bool is_current_;
 
   Castle();
-  Castle(Vector2 pos, Color color, Fraction fraction, int level);
+  Castle(Vector2 pos, Color color, Fraction fraction, CastleLevel *level);
 
   int GetCurrentLevel();
   int GetRadius();
   Fraction GetFraction();
   Vector2 GetPosition();
   int GetNextLevelCost();
+  void SetMenuVisible(bool value);
 
   float CalculateRadiusByLevel();
   void Attack(std::vector<Warrior> &warriors);
@@ -55,7 +56,7 @@ class Castle {
   int attack_frequency_;
   int attack_tick_;
 
-  void ChangeFraction(const Warrior &warrior, std::vector<Road> &roads);
+  void ChangeFraction(Warrior &warrior, std::vector<Road> &roads);
   void DrawAttackPath();
   void DrawCastle();
   void DrawMenu();

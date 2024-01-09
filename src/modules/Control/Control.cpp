@@ -32,7 +32,7 @@ void Control::CheckCastlePressed(GameObjects *objects) {
         break;
       } else {
         castle->is_current_ = false;
-        castle->showMenu = false;
+        castle->SetMenuVisible(false);
       }
     }
   }
@@ -47,7 +47,7 @@ void Control::LookForAnAttackingCastle(GameObjects *objects) {
       // show menu
       if (CheckCollisionPointCircle(mouse_released_position_, castle->GetPosition(), castle->GetRadius())) {
         castle->is_current_ = false;
-        castle->showMenu = true;
+        castle->SetMenuVisible(true);
       // assign a target
       } else {
         castle->TryToAssignATarget(

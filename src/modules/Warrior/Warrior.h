@@ -12,25 +12,33 @@ namespace CW {
 class Warrior
 {
 public:
-  int radius;
-  Vector2 pos;
-  Vector2 vel;
-  Color color;
-  float speed;
-  float angle;
-  Vector2 target;
-  Vector2 homeCastle;
-  Fraction fraction;
-  bool targetReached;
-
   Warrior();
   Warrior(Vector2 pos, Vector2 target, Color color, Fraction fraction);
+
+  void Update();
+  void Draw();
 
   void Move();
   bool CastleReached();
 
-  void Update();
-  void Draw();
+  int GetRadius();
+  Vector2 GetPosition();
+  Vector2 GetHomeCastlePosition();
+  Fraction GetFraction();
+  Color GetColor();
+
+
+ private:
+  int radius_;
+  Vector2 position_;
+  Vector2 velocity_;
+  Color color_;
+  float speed_;
+  float angle_;
+  Vector2 target_;
+  Vector2 home_castle_;
+  Fraction fraction_;
+  bool target_reached_;
 };
 
 }  // namespace CW

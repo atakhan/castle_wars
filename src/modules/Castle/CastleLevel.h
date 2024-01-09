@@ -2,6 +2,7 @@
 #define CASTLELEVEL_H
 
 #include "../../Configs.h"
+#include "../Game/RulesBook.h"
 
 #include <raylib-cpp.hpp>
 namespace CW {
@@ -15,7 +16,7 @@ enum LevelParameters {
 
 class CastleLevel {
  public:
-  CastleLevel(int level);
+  CastleLevel(int level, RulesBook *rules);
 
   int GetCurrentLevel();
   int GetNextLevelCost();
@@ -31,7 +32,7 @@ class CastleLevel {
   // 2 - Max HP
   // 3 - Regen
   // 4 - Attack Frequency
-  Rules rules_;
+  RulesBook *rules_;
   int current_;
   
 };
