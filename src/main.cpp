@@ -25,6 +25,8 @@
 
 // TODO:
 //    - Add maps
+//    - Add rules editor before game started
+//    - Add go back to menu
 //    - Make regen stop if castle attacked 
 //    - Make castle state view (idle, attack, defense)
 //    - BUG: crash on upgrade castle when it max level
