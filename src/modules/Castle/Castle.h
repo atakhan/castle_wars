@@ -4,8 +4,7 @@
 #include "../../Configs.h"
 #include "../Warrior/Warrior.h"
 #include "../Road/Road.h"
-#include "CastleMenu.h"
-#include "CastleLevel.h"
+#include "../Game/RulesBook.h"
 
 #include <raylib-cpp.hpp>
 #include <iostream>
@@ -18,7 +17,10 @@ class Castle {
   bool is_current_;
 
   Castle();
-  Castle(Vector2 pos, Color color, Fraction fraction, CastleLevel *level);
+  Castle(Vector2 pos, Color color, Fraction fraction, int level, RulesBook *rules);
+
+  void Update(std::vector<Warrior> &warriors);
+  void Draw();
 
   int GetCurrentLevel();
   int GetRadius();
@@ -26,38 +28,42 @@ class Castle {
   Vector2 GetPosition();
   int GetNextLevelCost();
   void SetMenuVisible(bool value);
+  bool GetMenuVisible();
 
   float CalculateRadiusByLevel();
   void Attack(std::vector<Warrior> &warriors);
   void TryToAssignATarget(Vector2 mousePos, std::vector<Castle> &castles, std::vector<Road> &roads);
   void TryToCancelAttack(Vector2 target);
-  bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
   void TakeDamage(Warrior &warrior, std::vector<Road> &roads);
   void RemoveActiveRoads(std::vector<Road> &roads);
   void Regen();
   void Upgrade();
   void UpdateParameters();
-  void Update(std::vector<Warrior> &warriors);
-  void Draw();
+  bool OnMenuPressed();
  
  private:
+  RulesBook *rules_;
   std::vector<Vector2> targets_;
-  CastleMenu *menu_;
-  CastleLevel *level_;
   Fraction fraction_;
   Color color_;
   Vector2 position_;
+  Vector2 menu_position_;
   CastleState state_;
   float radius_;
+  float menu_radius_;
+  int current_level_;
   int warriors_count_;
   int max_warriors_;
   int regen_speed_;
   int regen_tick_;
   int attack_frequency_;
   int attack_tick_;
+  bool show_menu_;
 
+  bool RoadIsset(Vector2 endPos, std::vector<Road> &roads);
   void ChangeFraction(Warrior &warrior, std::vector<Road> &roads);
   void DrawAttackPath();
+  void DrawCastleLevel();
   void DrawCastle();
   void DrawMenu();
 };

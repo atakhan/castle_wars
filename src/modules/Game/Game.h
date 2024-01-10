@@ -17,7 +17,6 @@ namespace CW {
 class Game {
  public:
   Game(int w, int h, const std::string& title, RulesBook *rules);
-  void Init();
   void Update();
   void Draw();
   void DrawStats();

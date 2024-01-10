@@ -4,9 +4,8 @@ namespace CW {
 
 Castle::Castle() {}
 
-Castle::Castle(Vector2 pos, Color color, Fraction fraction, CastleLevel *level) 
-    : level_(level)
-    , menu_(new CastleMenu(pos, level))
+Castle::Castle(Vector2 pos, Color color, Fraction fraction, int level, RulesBook *rules) 
+    : current_level_(level)
     , fraction_(fraction)
     , position_(pos)
     , regen_tick_(0)
@@ -14,8 +13,14 @@ Castle::Castle(Vector2 pos, Color color, Fraction fraction, CastleLevel *level)
     , is_current_(false)
     , warriors_count_(8)
     , color_(color)
+    , rules_(rules)
+    , menu_radius_(30.0f)
 {
   UpdateParameters();
+  menu_position_ = {
+    position_.x - (menu_radius_ * (powf((current_level_ + 1), 0.5))),
+    position_.y + (menu_radius_ * (powf((current_level_ + 1), 0.5)))
+  };
 }
 
 void Castle::Update(std::vector<Warrior> &warriors) {
@@ -24,16 +29,8 @@ void Castle::Update(std::vector<Warrior> &warriors) {
   Regen();
 }
 
-void Castle::Draw() {
-  DrawCastle();
-  DrawAttackPath();
-  if (menu_->Show() && level_->GetCurrentLevel() < level_->GetMaxLevel()) {  // TODO: set max level instead of 7
-    menu_->Draw();
-  }
-}
-
 int Castle::GetCurrentLevel() {
-  return level_->GetCurrentLevel();
+  return current_level_;
 }
 
 int Castle::GetRadius() {
@@ -49,37 +46,50 @@ Vector2 Castle::GetPosition() {
 }
 
 float Castle::CalculateRadiusByLevel() {
-  return 30.0f * (powf((level_->GetCurrentLevel() + 1), 0.5));
+  return 30.0f * (powf((current_level_ + 1), 0.5));
 }
 
 int Castle::GetNextLevelCost() {
-  return level_->GetNextLevelCost();
+  return rules_->GetNextLevelCost(current_level_);
 }
 
 void Castle::SetMenuVisible(bool value) {
-  menu_->SetVisible(value);
+  show_menu_ = value;
+}
+
+bool Castle::GetMenuVisible() {
+  return show_menu_;
 }
 
 void Castle::Upgrade() {
-  if (!menu_->UpgradeCastle()) {
+  if (!OnMenuPressed()) {
     return;
   }
-  if (warriors_count_ < level_->GetNextLevelCost()) {
-    return;
-  } 
-  if (level_->GetCurrentLevel() >= 7) {
+  if ((current_level_ + 1) >= rules_->GetMaxLevel()) {
     return;
   }
-  warriors_count_ = warriors_count_ - level_->GetNextLevelCost();
-  level_->SetCurrentLevel(level_->GetCurrentLevel() + 1);
+  if (warriors_count_ < GetNextLevelCost()) {
+    return;
+  }
+  warriors_count_ = warriors_count_ - GetNextLevelCost();
+  current_level_++;
   UpdateParameters();
+  SetMenuVisible(false);
+}
+
+bool Castle::OnMenuPressed() {
+  if (show_menu_ && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && 
+      CheckCollisionPointCircle(GetMousePosition(), menu_position_, menu_radius_)) {
+    return true;
+  }
+  return false;
 }
 
 void Castle::UpdateParameters() {
   radius_           = CalculateRadiusByLevel();
-  max_warriors_     = level_->GetCurrentMax();
-  regen_speed_      = level_->GetCurrentRegen();
-  attack_frequency_ = level_->GetCurrentAttackFrequency();
+  max_warriors_     = rules_->GetCurrentMax(current_level_);
+  regen_speed_      = rules_->GetCurrentRegen(current_level_);
+  attack_frequency_ = rules_->GetCurrentAttackFrequency(current_level_);
 }
 
 void Castle::ChangeFraction(Warrior &warrior, std::vector<Road> &roads) {
@@ -184,6 +194,21 @@ void Castle::TryToCancelAttack(Vector2 target_castle) {
   }
 }
 
+void Castle::Draw() {
+  DrawCastle();
+  DrawCastleLevel();
+  DrawAttackPath();
+  if (show_menu_ && current_level_ < rules_->GetMaxLevel()) {
+    DrawMenu();
+  }
+}
+
+void Castle::DrawCastleLevel() {
+  DrawCircle(position_.x, position_.y - radius_, 20, BLACK);
+  std::string current_level_str = std::to_string(current_level_);
+  raylib::DrawText(current_level_str, position_.x - 6.0f, position_.y - radius_, 12.0f, WHITE);
+}
+
 void Castle::DrawCastle() {
   DrawCircle(position_.x, position_.y, radius_, color_);
   std::string warriors_count__text = std::to_string(warriors_count_);
@@ -194,6 +219,12 @@ void Castle::DrawAttackPath() {
   if (is_current_) {
     DrawLineEx(position_, GetMousePosition(), 4.0, color_);
   }
+}
+
+void Castle::DrawMenu() {
+  DrawCircle(menu_position_.x, menu_position_.y, menu_radius_, ColorAlpha(DARKGREEN, 0.85));
+  std::string update_cost = std::to_string(GetNextLevelCost());
+  raylib::DrawText(update_cost, menu_position_.x - 8.0f, menu_position_.y - 8.0f, 12.0f, WHITE);
 }
 
 }  // namespace CW

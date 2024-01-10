@@ -35,11 +35,15 @@
 
 int main()
 {
+  // 1 - Cost
+  // 2 - Max HP
+  // 3 - Regen
+  // 4 - Attack Frequency
   CW::RulesBook rules({
     {0,  12, 80, 40},
-    {6,  24, 70, 35},
-    {12, 48, 60, 30},
-    {24, 96, 50, 25},
+    {2,  24, 70, 35},
+    {2, 48, 60, 30},
+    {2, 96, 50, 25},
   });
 
   CW::Game game = CW::Game(

@@ -13,10 +13,10 @@ Game::Game(int w, int h, const std::string& title, RulesBook *rules)
     , rules_(rules)
 {
   game_state_ = GAME_MENU_STATE;
-  objects_->AddCastle(Castle({300, 300}, CW_BLUE, PLAYER,  new CastleLevel(0, rules)));
-  objects_->AddCastle(Castle({700, 800}, CW_RED,  AI,      new CastleLevel(3, rules)));
-  objects_->AddCastle(Castle({550, 200}, CW_RED,  AI,      new CastleLevel(0, rules)));
-  objects_->AddCastle(Castle({150, 100}, GRAY,    NEUTRAL, new CastleLevel(1, rules)));
+  objects_->AddCastle(Castle({300, 300}, CW_BLUE, PLAYER,  0, rules));
+  objects_->AddCastle(Castle({700, 800}, CW_RED,  AI,      3, rules));
+  objects_->AddCastle(Castle({550, 200}, CW_RED,  AI,      0, rules));
+  objects_->AddCastle(Castle({150, 100}, GRAY,    NEUTRAL, 1, rules));
 }
 
 bool Game::WindowShouldClose() {
@@ -29,9 +29,9 @@ void Game::DrawStats() {
 
 void Game::Update() {
   if (game_state_ == GAME_PLAY_STATE) {
+    objects_->Update();
     control_->Update(objects_);
     fight_->Update(objects_);
-    objects_->Update();
   } else if (game_state_ == GAME_MENU_STATE) {
     menu_->Update(game_state_);
   }
