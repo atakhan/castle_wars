@@ -77,8 +77,15 @@ void Castle::Upgrade() {
   SetMenuVisible(false);
 }
 
+bool Castle::CheckCollisionWithMouse(Vector2 mouse_pos) {
+  if (CheckCollisionPointCircle(mouse_pos, GetPosition(), GetRadius())) {
+    return true;
+  }
+  return false;
+}
+
 bool Castle::OnMenuPressed() {
-  if (show_menu_ && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && 
+  if (show_menu_ && IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && 
       CheckCollisionPointCircle(GetMousePosition(), menu_position_, menu_radius_)) {
     return true;
   }

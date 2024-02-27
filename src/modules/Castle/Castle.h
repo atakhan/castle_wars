@@ -22,13 +22,18 @@ class Castle {
   void Update(std::vector<Warrior> &warriors);
   void Draw();
 
+  // Getters
   int GetCurrentLevel();
   int GetRadius();
-  Fraction GetFraction();
-  Vector2 GetPosition();
   int GetNextLevelCost();
-  void SetMenuVisible(bool value);
   bool GetMenuVisible();
+  Vector2 GetPosition();
+  Fraction GetFraction();
+
+  // Setters
+  void SetMenuVisible(bool value);
+
+  bool CheckCollisionWithMouse(Vector2 mouse_pos);
 
   float CalculateRadiusByLevel();
   void Attack(std::vector<Warrior> &warriors);

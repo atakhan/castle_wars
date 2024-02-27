@@ -23,10 +23,6 @@ bool Game::WindowShouldClose() {
   return window_->ShouldClose();
 }
 
-void Game::DrawStats() {
-  DrawFPS(10,10);
-}
-
 void Game::Update() {
   if (game_state_ == GAME_PLAY_STATE) {
     objects_->Update();
@@ -45,6 +41,10 @@ void Game::Draw() {
   } else if (game_state_ == GAME_MENU_STATE) {
     menu_->Draw();
   }
+}
+
+void Game::DrawStats() {
+  DrawFPS(10,10);
 }
 
 }  // namespace CW

@@ -20,6 +20,7 @@
 //    - Fix bug: in last level regen stopped
 //    - Add cost of update to update button
 //    - Add neutral castles (without regen)
+//    - BUG: crash on upgrade castle when it max level
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,7 +30,7 @@
 //    - Add go back to menu
 //    - Make regen stop if castle attacked 
 //    - Make castle state view (idle, attack, defense)
-//    - BUG: crash on upgrade castle when it max level
+//    - Add regen icon to castles
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +47,7 @@ int main()
     {2, 96, 50, 25},
   });
 
-  CW::Game game = CW::Game(
+  CW::Game game(
     1000, 1200, 
     "Castle Wars 0.1",
     &rules
@@ -60,7 +61,9 @@ int main()
 
     BeginDrawing();
     ClearBackground(CW_MAIN_BG);
+    
     game.Draw();
+    
     EndDrawing();
 
   }

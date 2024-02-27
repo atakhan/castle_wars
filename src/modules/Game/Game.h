@@ -19,7 +19,6 @@ class Game {
   Game(int w, int h, const std::string& title, RulesBook *rules);
   void Update();
   void Draw();
-  void DrawStats();
   bool WindowShouldClose();
 
  private:
@@ -33,6 +32,8 @@ class Game {
 
   int screen_width_;
   int screen_height_;
+  
+  void DrawStats();
 };
 
 }  // namespace CW
