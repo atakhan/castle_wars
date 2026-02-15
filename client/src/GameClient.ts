@@ -46,12 +46,15 @@ export class GameClient {
   private localPlayerState: LocalPlayerState | null = null;
   private pendingInputs: InputCommand[] = []; // История отправленных команд
   private readonly MOVE_SPEED = 200; // Должно совпадать с сервером
-  private readonly ARRIVAL_THRESHOLD = 2; // pixels - consider "at target"
+  private readonly ARRIVAL_RADIUS = 15; // круг прибытия — внутри замедляемся
+  private readonly SNAP_THRESHOLD = 1; // snap в точку и стоп при расстоянии меньше этого
   
   // Interpolation для других игроков
   private playerSnapshots: Map<string, Snapshot[]> = new Map(); // История состояний для каждого игрока
+  private lastSnapshotTime: Map<string, number> = new Map(); // Throttle: один снимок на тик (~50ms)
   private readonly INTERPOLATION_DELAY = 100; // Задержка для interpolation (мс)
   private readonly MAX_SNAPSHOTS = 10; // Максимум состояний в истории
+  private readonly SNAPSHOT_THROTTLE_MS = 40; // Не чаще одного снимка в 40ms (сервер 20 TPS = 50ms)
   
   // Reconciliation
   private lastServerState: Map<string, { x: number; y: number; vx: number; vy: number }> = new Map();
@@ -127,6 +130,7 @@ export class GameClient {
       console.log('Player left:', sessionId);
       this.removePlayerVisualization(sessionId);
       this.playerSnapshots.delete(sessionId);
+      this.lastSnapshotTime.delete(sessionId);
       this.lastServerState.delete(sessionId);
       this.updatePlayersCount();
     });
@@ -193,6 +197,11 @@ export class GameClient {
   }
 
   private addSnapshot(sessionId: string, player: Player) {
+    const now = Date.now();
+    const last = this.lastSnapshotTime.get(sessionId) ?? 0;
+    if (now - last < this.SNAPSHOT_THROTTLE_MS) return;
+    this.lastSnapshotTime.set(sessionId, now);
+
     const snapshots = this.playerSnapshots.get(sessionId) || [];
     snapshots.push({
       x: player.x,
@@ -200,14 +209,12 @@ export class GameClient {
       vx: player.vx,
       vy: player.vy,
       direction: player.direction,
-      timestamp: Date.now()
+      timestamp: now
     });
-    
-    // Ограничиваем размер истории
+
     if (snapshots.length > this.MAX_SNAPSHOTS) {
       snapshots.shift();
     }
-    
     this.playerSnapshots.set(sessionId, snapshots);
   }
 
@@ -472,12 +479,20 @@ export class GameClient {
     }
     
     const t = (targetTime - older.timestamp) / timeDiff;
-    const clampedT = Math.max(0, Math.min(1, t)); // Ограничиваем от 0 до 1
-    
+    const clampedT = Math.max(0, Math.min(1, t));
+
+    // Интерполяция угла по кратчайшей дуге (избегаем скачка при переходе -π ↔ π)
+    let dirDelta = newer.direction - older.direction;
+    while (dirDelta > Math.PI) dirDelta -= 2 * Math.PI;
+    while (dirDelta < -Math.PI) dirDelta += 2 * Math.PI;
+    let direction = older.direction + dirDelta * clampedT;
+    while (direction > Math.PI) direction -= 2 * Math.PI;
+    while (direction < -Math.PI) direction += 2 * Math.PI;
+
     return {
       x: older.x + (newer.x - older.x) * clampedT,
       y: older.y + (newer.y - older.y) * clampedT,
-      direction: older.direction + (newer.direction - older.direction) * clampedT
+      direction
     };
   }
 
@@ -600,10 +615,19 @@ export class GameClient {
         const dx = this.localTarget.x - this.localPlayerState.x;
         const dy = this.localTarget.y - this.localPlayerState.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < this.ARRIVAL_THRESHOLD) {
+        if (dist < this.SNAP_THRESHOLD) {
+          this.localPlayerState.x = this.localTarget.x;
+          this.localPlayerState.y = this.localTarget.y;
           this.localPlayerState.vx = 0;
           this.localPlayerState.vy = 0;
           this.localTarget = null;
+        } else if (dist <= this.ARRIVAL_RADIUS) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const speed = this.MOVE_SPEED * (dist / this.ARRIVAL_RADIUS);
+          this.localPlayerState.vx = nx * speed;
+          this.localPlayerState.vy = ny * speed;
+          this.localPlayerState.direction = Math.atan2(this.localPlayerState.vy, this.localPlayerState.vx);
         } else {
           const nx = dx / dist;
           const ny = dy / dist;
