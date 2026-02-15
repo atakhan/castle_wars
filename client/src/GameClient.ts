@@ -15,8 +15,8 @@ interface Snapshot {
 // Структура для хранения отправленных команд (для reconciliation)
 interface InputCommand {
   seq: number;
-  moveX: number;
-  moveY: number;
+  targetX: number;
+  targetY: number;
   timestamp: number;
 }
 
@@ -37,18 +37,16 @@ export class GameClient {
   private obstacleContainer: PIXI.Container;
   private staticEntityGraphics: Map<string, PIXI.Graphics> = new Map();
   
-  // Input handling
+  // Input handling (mouse: select character, then right-click to move)
   private inputSequence: number = 0;
-  private lastInputTime: number = 0;
-  private readonly INPUT_RATE = 20; // 20 inputs per second
-  private keys: Set<string> = new Set();
-  private lastMoveX: number = 0;
-  private lastMoveY: number = 0;
-  
+  private characterSelected: boolean = false;
+  private localTarget: { x: number; y: number } | null = null;
+
   // Client-side prediction для своего игрока
   private localPlayerState: LocalPlayerState | null = null;
   private pendingInputs: InputCommand[] = []; // История отправленных команд
   private readonly MOVE_SPEED = 200; // Должно совпадать с сервером
+  private readonly ARRIVAL_THRESHOLD = 2; // pixels - consider "at target"
   
   // Interpolation для других игроков
   private playerSnapshots: Map<string, Snapshot[]> = new Map(); // История состояний для каждого игрока
@@ -274,22 +272,9 @@ export class GameClient {
   }
 
   private replayPendingInputs() {
-    if (!this.localPlayerState) return;
-    
-    // Переигрываем все pending inputs
-    for (const input of this.pendingInputs) {
-      const moveX = input.moveX * this.MOVE_SPEED;
-      const moveY = input.moveY * this.MOVE_SPEED;
-      
-      // Применяем движение (упрощенная версия, без deltaTime, так как это переигрывание)
-      // В реальности нужно учитывать время между командами
-      this.localPlayerState.vx = moveX;
-      this.localPlayerState.vy = moveY;
-      
-      if (moveX !== 0 || moveY !== 0) {
-        this.localPlayerState.direction = Math.atan2(moveY, moveX);
-      }
-    }
+    if (this.pendingInputs.length === 0) return;
+    const last = this.pendingInputs[this.pendingInputs.length - 1];
+    this.localTarget = { x: last.targetX, y: last.targetY };
   }
 
   private removeAcknowledgedInputs() {
@@ -302,25 +287,12 @@ export class GameClient {
 
   private setupInput() {
     window.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-        e.preventDefault();
-        this.keys.add(key);
-      }
-      if (key === 'e') {
+      if (e.key.toLowerCase() === 'e') {
         e.preventDefault();
         this.sendInteract();
       }
     });
-    
-    window.addEventListener('keyup', (e) => {
-      const key = e.key.toLowerCase();
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-        e.preventDefault();
-        this.keys.delete(key);
-        this.handleInput(true);
-      }
-    });
+    this.setupMouseInput();
   }
 
   private sendInteract() {
@@ -332,81 +304,66 @@ export class GameClient {
     }
   }
 
-  private handleInput(force: boolean = false) {
-    if (!this.room) {
-      return;
-    }
+  private setupMouseInput() {
+    const view = this.app.view as HTMLCanvasElement;
+    if (!view) return;
 
+    view.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    view.addEventListener('pointerdown', (e: PointerEvent) => {
+      const { worldX, worldY } = this.screenToWorld(e.clientX, e.clientY);
+      if (e.button === 0) {
+        if (this.isClickOnMyCharacter(worldX, worldY)) {
+          this.characterSelected = true;
+        }
+      } else if (e.button === 2 && this.characterSelected) {
+        this.sendMoveTo(worldX, worldY);
+      }
+    });
+  }
+
+  private screenToWorld(clientX: number, clientY: number): { worldX: number; worldY: number } {
+    const view = this.app.view as HTMLCanvasElement;
+    const rect = view.getBoundingClientRect();
+    const centerX = this.app.screen.width / 2;
+    const centerY = this.app.screen.height / 2;
+    const worldX = (clientX - rect.left) * (this.app.screen.width / rect.width) - centerX;
+    const worldY = (clientY - rect.top) * (this.app.screen.height / rect.height) - centerY;
+    return { worldX, worldY };
+  }
+
+  private isClickOnMyCharacter(worldX: number, worldY: number): boolean {
+    if (!this.localPlayerState) return false;
+    const dx = worldX - this.localPlayerState.x;
+    const dy = worldY - this.localPlayerState.y;
+    return dx * dx + dy * dy <= this.PLAYER_COLLIDER_RADIUS * this.PLAYER_COLLIDER_RADIUS;
+  }
+
+  private sendMoveTo(targetX: number, targetY: number) {
+    if (!this.room) return;
     const now = Date.now();
-    const minInterval = 1000 / this.INPUT_RATE;
-    
-    if (!force && now - this.lastInputTime < minInterval) {
-      return;
-    }
-    
-    this.lastInputTime = now;
-
-    // Calculate movement vector
-    let moveX = 0;
-    let moveY = 0;
-
-    if (this.keys.has('w') || this.keys.has('arrowup')) moveY -= 1;
-    if (this.keys.has('s') || this.keys.has('arrowdown')) moveY += 1;
-    if (this.keys.has('a') || this.keys.has('arrowleft')) moveX -= 1;
-    if (this.keys.has('d') || this.keys.has('arrowright')) moveX += 1;
-
-    // Normalize diagonal movement
-    if (moveX !== 0 && moveY !== 0) {
-      moveX *= 0.707;
-      moveY *= 0.707;
-    }
-
-    // Only send if input changed
-    if (moveX === this.lastMoveX && moveY === this.lastMoveY && !force) {
-      return;
-    }
-
-    this.lastMoveX = moveX;
-    this.lastMoveY = moveY;
-
-    // Сохраняем команду для reconciliation
     const command: InputCommand = {
       seq: this.inputSequence++,
-      moveX,
-      moveY,
+      targetX,
+      targetY,
       timestamp: now
     };
     this.pendingInputs.push(command);
-
-    // Применяем локальное предсказание (client-side prediction)
-    this.applyLocalPrediction(moveX, moveY);
-
-    // Send input to server
+    this.applyLocalPrediction(targetX, targetY);
     try {
       this.room.send('input', {
         seq: command.seq,
         ts: now,
-        moveX,
-        moveY,
+        targetX,
+        targetY,
       });
-    } catch (error) {
-      // Connection might be closed
+    } catch {
+      // connection closed
     }
   }
 
-  private applyLocalPrediction(moveX: number, moveY: number) {
-    if (!this.localPlayerState) return;
-    
-    // Применяем движение локально (предсказание)
-    const vx = moveX * this.MOVE_SPEED;
-    const vy = moveY * this.MOVE_SPEED;
-    
-    this.localPlayerState.vx = vx;
-    this.localPlayerState.vy = vy;
-    
-    if (vx !== 0 || vy !== 0) {
-      this.localPlayerState.direction = Math.atan2(vy, vx);
-    }
+  private applyLocalPrediction(targetX: number, targetY: number) {
+    this.localTarget = { x: targetX, y: targetY };
   }
 
   private createPlayerVisualization(sessionId: string, player: Player) {
@@ -635,37 +592,43 @@ export class GameClient {
   }
 
   private update(deltaTime: number) {
-    // Обновляем локальное предсказание (движение своего игрока)
+    // Обновляем локальное предсказание (движение своего игрока к цели)
     if (this.localPlayerState && this.room) {
-      // PixiJS ticker дает deltaTime как множитель (1.0 = 60 FPS)
-      // Конвертируем в секунды: deltaTime / 60
-      const dt = deltaTime / 60;
-      
-      // Применяем velocity к позиции
+      const dt = deltaTime / 60; // PixiJS: 1.0 = 60 FPS -> seconds
+
+      if (this.localTarget) {
+        const dx = this.localTarget.x - this.localPlayerState.x;
+        const dy = this.localTarget.y - this.localPlayerState.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < this.ARRIVAL_THRESHOLD) {
+          this.localPlayerState.vx = 0;
+          this.localPlayerState.vy = 0;
+          this.localTarget = null;
+        } else {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.localPlayerState.vx = nx * this.MOVE_SPEED;
+          this.localPlayerState.vy = ny * this.MOVE_SPEED;
+          this.localPlayerState.direction = Math.atan2(this.localPlayerState.vy, this.localPlayerState.vx);
+        }
+      }
+
       this.localPlayerState.x += this.localPlayerState.vx * dt;
       this.localPlayerState.y += this.localPlayerState.vy * dt;
-      // Разрешаем коллизии с препятствиями (как на сервере), чтобы предсказание не проходило сквозь стены
       this.resolveLocalPlayerCollisions();
-      
-      // Обновляем визуализацию
+
       const myPlayer = this.room.state.players.get(this.mySessionId);
       if (myPlayer) {
         this.updatePlayerVisualization(this.mySessionId, myPlayer);
       }
     }
-    
-    // Обновляем визуализацию других игроков (interpolation)
+
     if (this.room) {
       this.room.state.players.forEach((player, sessionId) => {
         if (sessionId !== this.mySessionId) {
           this.updatePlayerVisualization(sessionId, player);
         }
       });
-    }
-    
-    // Handle continuous input
-    if (this.keys.size > 0 && this.room) {
-      this.handleInput();
     }
 
     // Interact hint: show "E - interact" when near an interactable

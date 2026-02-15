@@ -61,24 +61,35 @@ export class GameWorld {
     }
   }
 
+  private lastMoveToTime: Map<string, number> = new Map();
+  private readonly MOVE_TO_RATE_MS = 100;
+
   handlePlayerInput(playerId: string, input: any) {
-    // Find entity by playerId
+    const targetX = typeof input.targetX === "number" ? input.targetX : null;
+    const targetY = typeof input.targetY === "number" ? input.targetY : null;
+    if (targetX === null || targetY === null) return;
+
+    const now = Date.now();
+    const last = this.lastMoveToTime.get(playerId) ?? 0;
+    if (now - last < this.MOVE_TO_RATE_MS) return;
+    this.lastMoveToTime.set(playerId, now);
+
     let found = false;
     for (const [entityId] of this.entities.entries()) {
       const inputController = this.componentManager.getComponent<InputController>(
         entityId,
         InputController
       );
-      
+
       if (inputController && inputController.playerId === playerId) {
-        inputController.moveX = input.moveX || 0;
-        inputController.moveY = input.moveY || 0;
+        inputController.targetX = targetX;
+        inputController.targetY = targetY;
         found = true;
-        console.log(`[GameWorld] Updated input for player ${playerId}: moveX=${inputController.moveX}, moveY=${inputController.moveY}`);
+        console.log(`[GameWorld] Updated target for player ${playerId}: (${targetX.toFixed(2)}, ${targetY.toFixed(2)})`);
         break;
       }
     }
-    
+
     if (!found) {
       console.warn(`[GameWorld] Player ${playerId} not found in entities! Total entities: ${this.entities.size}`);
     }
