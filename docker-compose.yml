@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: castle_wars_server
+    ports:
+      - "2567:2567"  # Colyseus default port
+    environment:
+      - NODE_ENV=development
+      - PORT=2567
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - castle_wars_network
+    command: npm run dev
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: castle_wars_client
+    ports:
+      - "8080:8080"  # Vite dev server port
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - castle_wars_network
+    environment:
+      - VITE_SERVER_URL=ws://localhost:2567
+    command: npm run dev -- --host
+
+networks:
+  castle_wars_network:
+    driver: bridge
+

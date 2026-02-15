@@ -1,0 +1,21 @@
+{
+  "name": "castle-wars-client",
+  "version": "0.1.0",
+  "description": "Castle Wars Game Client",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pixi.js": "^7.3.2",
+    "colyseus.js": "^0.15.0",
+    "@colyseus/schema": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  }
+}
+
