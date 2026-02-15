@@ -43,6 +43,18 @@
             color: white;
             font-size: 14px;
         }
+        #interact-hint {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #aaa;
+            font-size: 14px;
+            display: none;
+        }
+        #interact-hint.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +64,7 @@
             <div>Status: <span id="status">Connecting...</span></div>
             <div>Players: <span id="players">0</span></div>
         </div>
+        <div id="interact-hint">E — взаимодействовать</div>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>

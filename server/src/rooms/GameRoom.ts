@@ -1,5 +1,5 @@
 import { Room, Client } from "colyseus";
-import { GameState, Player } from "../schemas/GameState";
+import { GameState, Player, StaticEntity } from "../schemas/GameState";
 import { GameWorld } from "../ecs/GameWorld";
 
 export class GameRoom extends Room<GameState> {
@@ -12,6 +12,17 @@ export class GameRoom extends Room<GameState> {
     
     this.setState(new GameState());
     this.world = new GameWorld();
+    this.world.spawnStaticObstacles();
+    this.world.spawnInteractables();
+    this.syncStaticState();
+    
+    this.onMessage("interact", (client: Client) => {
+      const result = this.world.handleInteract(client.sessionId);
+      if (result) {
+        const se = this.state.staticEntities.get(result.entityId);
+        if (se) se.interactableState = result.newState;
+      }
+    });
     
     // Register message handler for 'input' type
     // This MUST be done in onCreate for Colyseus 0.15.0
@@ -83,6 +94,25 @@ export class GameRoom extends Room<GameState> {
       clearInterval(this.tickInterval);
       this.tickInterval = null;
     }
+  }
+
+  private syncStaticState() {
+    const staticEntities = this.world.getStaticEntities();
+    staticEntities.forEach((data, entityId) => {
+      const se = new StaticEntity();
+      se.id = entityId;
+      se.x = data.position.x;
+      se.y = data.position.y;
+      se.shape = data.collider.shape;
+      se.radius = data.collider.radius;
+      se.halfWidth = data.collider.halfWidth;
+      se.halfHeight = data.collider.halfHeight;
+      if (data.interactable) {
+        se.interactableKind = data.interactable.kind;
+        se.interactableState = data.interactable.state;
+      }
+      this.state.staticEntities.set(entityId, se);
+    });
   }
 
   private syncState() {

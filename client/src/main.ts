@@ -83,6 +83,13 @@ function initApp() {
       playersEl.textContent = count.toString();
     };
   }
+
+  const interactHintEl = document.getElementById('interact-hint');
+  if (interactHintEl) {
+    gameClient.onInteractHintChange = (show) => {
+      interactHintEl.classList.toggle('visible', show);
+    };
+  }
 }
 
 // Wait for DOM to be ready

@@ -6,11 +6,15 @@ import { Velocity } from "./components/Velocity";
 import { InputController } from "./components/InputController";
 import { NetworkReplication } from "./components/NetworkReplication";
 import { Direction } from "./components/Direction";
+import { Collider } from "./components/Collider";
+import { Interactable } from "./components/Interactable";
 import { MovementSystem } from "./systems/MovementSystem";
 import { InputSystem } from "./systems/InputSystem";
+import { CollisionSystem } from "./systems/CollisionSystem";
 
 export class GameWorld {
   private entities: Map<string, Entity> = new Map();
+  private staticEntityIds: Set<string> = new Set();
   private componentManager: ComponentManager;
   private systemManager: SystemManager;
   private nextEntityId: number = 0;
@@ -19,9 +23,10 @@ export class GameWorld {
     this.componentManager = new ComponentManager();
     this.systemManager = new SystemManager(this.componentManager);
     
-    // Register systems
+    // Register systems (order: input -> movement -> collision)
     this.systemManager.registerSystem(new InputSystem());
     this.systemManager.registerSystem(new MovementSystem());
+    this.systemManager.registerSystem(new CollisionSystem());
   }
 
   createPlayer(playerId: string): string {
@@ -34,6 +39,7 @@ export class GameWorld {
     this.componentManager.addComponent(entityId, new InputController(playerId));
     this.componentManager.addComponent(entityId, new NetworkReplication(playerId));
     this.componentManager.addComponent(entityId, new Direction(0));
+    this.componentManager.addComponent(entityId, new Collider("circle", false, 30, 0, 0));
     
     this.entities.set(entityId, entity);
     return entityId;
@@ -80,6 +86,94 @@ export class GameWorld {
 
   update(deltaTime: number) {
     this.systemManager.update(deltaTime);
+  }
+
+  spawnStaticObstacles(): void {
+    // Walls / boxes - AABB obstacles
+    const obstacles: { x: number; y: number; halfWidth: number; halfHeight: number }[] = [
+      { x: 200, y: 0, halfWidth: 80, halfHeight: 20 },
+      { x: -200, y: 100, halfWidth: 60, halfHeight: 100 },
+      { x: 150, y: -150, halfWidth: 40, halfHeight: 40 },
+      { x: -100, y: -200, halfWidth: 120, halfHeight: 25 },
+    ];
+    for (let i = 0; i < obstacles.length; i++) {
+      const o = obstacles[i];
+      const entityId = `static_${this.nextEntityId++}`;
+      const entity = new Entity(entityId);
+      this.componentManager.addComponent(entityId, new Position(o.x, o.y));
+      this.componentManager.addComponent(
+        entityId,
+        new Collider("aabb", true, 0, o.halfWidth, o.halfHeight)
+      );
+      this.entities.set(entityId, entity);
+      this.staticEntityIds.add(entityId);
+    }
+  }
+
+  spawnInteractables(): void {
+    const items: { x: number; y: number; halfWidth: number; halfHeight: number; kind: "chest" | "resource" }[] = [
+      { x: 0, y: -100, halfWidth: 25, halfHeight: 25, kind: "chest" },
+      { x: 180, y: -80, halfWidth: 20, halfHeight: 20, kind: "resource" },
+    ];
+    for (const item of items) {
+      const entityId = `static_${this.nextEntityId++}`;
+      const entity = new Entity(entityId);
+      this.componentManager.addComponent(entityId, new Position(item.x, item.y));
+      this.componentManager.addComponent(
+        entityId,
+        new Collider("aabb", true, 0, item.halfWidth, item.halfHeight)
+      );
+      this.componentManager.addComponent(
+        entityId,
+        new Interactable(60, item.kind, "closed")
+      );
+      this.entities.set(entityId, entity);
+      this.staticEntityIds.add(entityId);
+    }
+  }
+
+  getStaticEntities(): Map<string, { position: Position; collider: Collider; interactable?: Interactable }> {
+    const result = new Map<string, { position: Position; collider: Collider; interactable?: Interactable }>();
+    for (const entityId of this.staticEntityIds) {
+      const position = this.componentManager.getComponent<Position>(entityId, Position);
+      const collider = this.componentManager.getComponent<Collider>(entityId, Collider);
+      const interactable = this.componentManager.getComponent<Interactable>(entityId, Interactable);
+      if (position && collider) {
+        result.set(entityId, { position, collider, interactable: interactable ?? undefined });
+      }
+    }
+    return result;
+  }
+
+  handleInteract(playerId: string): { entityId: string; newState: string } | null {
+    let playerPosition: Position | null = null;
+    for (const [entityId] of this.entities.entries()) {
+      const inputController = this.componentManager.getComponent<InputController>(entityId, InputController);
+      if (inputController && inputController.playerId === playerId) {
+        playerPosition = this.componentManager.getComponent<Position>(entityId, Position);
+        break;
+      }
+    }
+    if (!playerPosition) return null;
+
+    let closest: { entityId: string; interactable: Interactable; distSq: number } | null = null;
+    for (const entityId of this.staticEntityIds) {
+      const interactable = this.componentManager.getComponent<Interactable>(entityId, Interactable);
+      const position = this.componentManager.getComponent<Position>(entityId, Position);
+      if (!interactable || !position || interactable.state !== "closed") continue;
+
+      const dx = position.x - playerPosition.x;
+      const dy = position.y - playerPosition.y;
+      const distSq = dx * dx + dy * dy;
+      const maxDist = interactable.interactionRadius;
+      if (distSq <= maxDist * maxDist && (!closest || distSq < closest.distSq)) {
+        closest = { entityId, interactable, distSq };
+      }
+    }
+    if (!closest) return null;
+
+    closest.interactable.state = "open";
+    return { entityId: closest.entityId, newState: "open" };
   }
 
   getReplicatedEntities(): Map<string, { position: Position; velocity: Velocity; direction: Direction }> {

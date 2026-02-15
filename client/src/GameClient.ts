@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { Client, Room } from 'colyseus.js';
-import { GameState, Player } from './schemas/GameState';
+import { GameState, Player, StaticEntity } from './schemas/GameState';
 
 // Структура для хранения истории состояний (для interpolation)
 interface Snapshot {
@@ -34,6 +34,8 @@ export class GameClient {
   private room: Room<GameState> | null = null;
   private players: Map<string, PIXI.Graphics> = new Map();
   private playerContainer: PIXI.Container;
+  private obstacleContainer: PIXI.Container;
+  private staticEntityGraphics: Map<string, PIXI.Graphics> = new Map();
   
   // Input handling
   private inputSequence: number = 0;
@@ -58,11 +60,15 @@ export class GameClient {
   
   public onStatusChange?: (status: string) => void;
   public onPlayersChange?: (count: number) => void;
+  public onInteractHintChange?: (show: boolean) => void;
   
   private mySessionId: string = '';
+  private readonly INTERACT_RADIUS = 60;
 
   constructor(private app: PIXI.Application, private serverUrl: string) {
+    this.obstacleContainer = new PIXI.Container();
     this.playerContainer = new PIXI.Container();
+    this.app.stage.addChild(this.obstacleContainer);
     this.app.stage.addChild(this.playerContainer);
     
     this.client = new Client(serverUrl);
@@ -126,6 +132,23 @@ export class GameClient {
       this.updatePlayersCount();
     });
 
+    // Static obstacles (walls, boxes)
+    const state = this.room.state as GameState & {
+      staticEntities?: {
+        onAdd: (cb: (entity: StaticEntity, key: string) => void) => void;
+        forEach: (cb: (entity: StaticEntity, key: string) => void) => void;
+      };
+    };
+    if (state.staticEntities) {
+      state.staticEntities.onAdd((entity: StaticEntity, key: string) => {
+        this.createObstacleVisualization(key, entity);
+      });
+      // Draw obstacles that already exist when we joined (onAdd may not fire for them)
+      state.staticEntities.forEach((entity: StaticEntity, key: string) => {
+        this.createObstacleVisualization(key, entity);
+      });
+    }
+
     // Handle player updates - используем onChange для каждого игрока
     this.room.state.players.onAdd((player: Player, sessionId: string) => {
       // Слушаем изменения свойств игрока
@@ -148,6 +171,7 @@ export class GameClient {
       this.localPlayerState = null;
       this.pendingInputs = [];
       this.playerSnapshots.clear();
+      this.removeAllObstacles();
     });
 
     this.room.onError((code: number, message: string) => {
@@ -282,6 +306,10 @@ export class GameClient {
         e.preventDefault();
         this.keys.add(key);
       }
+      if (key === 'e') {
+        e.preventDefault();
+        this.sendInteract();
+      }
     });
     
     window.addEventListener('keyup', (e) => {
@@ -292,6 +320,15 @@ export class GameClient {
         this.handleInput(true);
       }
     });
+  }
+
+  private sendInteract() {
+    if (!this.room) return;
+    try {
+      this.room.send('interact');
+    } catch {
+      // connection closed
+    }
   }
 
   private handleInput(force: boolean = false) {
@@ -495,6 +532,66 @@ export class GameClient {
     }
   }
 
+  private createObstacleVisualization(id: string, entity: StaticEntity) {
+    // Avoid duplicate if already created (e.g. both onAdd and forEach)
+    const existing = this.staticEntityGraphics.get(id);
+    if (existing) {
+      this.obstacleContainer.removeChild(existing);
+      existing.destroy();
+      this.staticEntityGraphics.delete(id);
+    }
+    const centerX = this.app.screen.width / 2;
+    const centerY = this.app.screen.height / 2;
+    const graphics = new PIXI.Graphics();
+    const isInteractable = !!entity.interactableKind;
+    const isOpen = entity.interactableState === "open";
+    const fill = isInteractable ? (isOpen ? 0x5c4a32 : 0x8b6914) : 0x4a3728;
+    const line = isInteractable ? (isOpen ? 0x3d3510 : 0x6b5a20) : 0x2a1810;
+    graphics.beginFill(fill);
+    graphics.lineStyle(2, line);
+    if (entity.shape === "circle") {
+      graphics.drawCircle(0, 0, entity.radius);
+    } else {
+      graphics.drawRect(-entity.halfWidth, -entity.halfHeight, entity.halfWidth * 2, entity.halfHeight * 2);
+    }
+    graphics.endFill();
+    graphics.x = entity.x + centerX;
+    graphics.y = entity.y + centerY;
+    this.staticEntityGraphics.set(id, graphics);
+    this.obstacleContainer.addChild(graphics);
+    if (entity.interactableKind && typeof (entity as { listen?: (field: string, cb: () => void) => void }).listen === "function") {
+      (entity as { listen: (field: string, cb: () => void) => void }).listen("interactableState", () => {
+        this.updateObstacleVisualization(id, entity);
+      });
+    }
+  }
+
+  private updateObstacleVisualization(id: string, entity: StaticEntity) {
+    const graphics = this.staticEntityGraphics.get(id);
+    if (!graphics) return;
+    graphics.clear();
+    const isInteractable = !!entity.interactableKind;
+    const isOpen = entity.interactableState === "open";
+    const fill = isInteractable ? (isOpen ? 0x5c4a32 : 0x8b6914) : 0x4a3728;
+    const line = isInteractable ? (isOpen ? 0x3d3510 : 0x6b5a20) : 0x2a1810;
+    graphics.beginFill(fill);
+    graphics.lineStyle(2, line);
+    if (entity.shape === "circle") {
+      graphics.drawCircle(0, 0, entity.radius);
+    } else {
+      graphics.drawRect(-entity.halfWidth, -entity.halfHeight, entity.halfWidth * 2, entity.halfHeight * 2);
+    }
+    graphics.endFill();
+  }
+
+  private removeAllObstacles() {
+    this.staticEntityGraphics.forEach((g) => {
+      this.obstacleContainer.removeChild(g);
+      g.destroy();
+    });
+    this.staticEntityGraphics.clear();
+  }
+
   private update(deltaTime: number) {
     // Обновляем локальное предсказание (движение своего игрока)
     if (this.localPlayerState && this.room) {
@@ -525,6 +622,22 @@ export class GameClient {
     // Handle continuous input
     if (this.keys.size > 0 && this.room) {
       this.handleInput();
+    }
+
+    // Interact hint: show "E - interact" when near an interactable
+    if (this.room && this.localPlayerState) {
+      const state = this.room.state as GameState & { staticEntities?: { forEach: (cb: (entity: StaticEntity, key: string) => void) => void } };
+      let showHint = false;
+      if (state.staticEntities) {
+        state.staticEntities.forEach((entity: StaticEntity, _key: string) => {
+          if (entity.interactableKind && entity.interactableState === "closed") {
+            const dx = entity.x - this.localPlayerState!.x;
+            const dy = entity.y - this.localPlayerState!.y;
+            if (dx * dx + dy * dy <= this.INTERACT_RADIUS * this.INTERACT_RADIUS) showHint = true;
+          }
+        });
+      }
+      this.onInteractHintChange?.(showHint);
     }
   }
 
