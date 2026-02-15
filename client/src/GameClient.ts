@@ -64,6 +64,7 @@ export class GameClient {
   
   private mySessionId: string = '';
   private readonly INTERACT_RADIUS = 60;
+  private readonly PLAYER_COLLIDER_RADIUS = 30; // must match server Collider for player
 
   constructor(private app: PIXI.Application, private serverUrl: string) {
     this.obstacleContainer = new PIXI.Container();
@@ -592,6 +593,47 @@ export class GameClient {
     this.staticEntityGraphics.clear();
   }
 
+  /**
+   * Разрешает коллизии предсказанной позиции своего игрока со статическими препятствиями.
+   * Та же логика, что на сервере (circle vs AABB), чтобы персонаж не проходил сквозь стены визуально.
+   */
+  private resolveLocalPlayerCollisions() {
+    if (!this.localPlayerState || !this.room) return;
+    const state = this.room.state as GameState & {
+      staticEntities?: { forEach: (cb: (entity: StaticEntity, key: string) => void) => void };
+    };
+    if (!state.staticEntities) return;
+
+    const pos = this.localPlayerState;
+    const r = this.PLAYER_COLLIDER_RADIUS;
+
+    state.staticEntities.forEach((entity: StaticEntity, _key: string) => {
+      if (entity.shape !== "aabb") return;
+      const ax = entity.x;
+      const ay = entity.y;
+      const hw = entity.halfWidth;
+      const hh = entity.halfHeight;
+
+      const closestX = Math.max(ax - hw, Math.min(pos.x, ax + hw));
+      const closestY = Math.max(ay - hh, Math.min(pos.y, ay + hh));
+      const dx = pos.x - closestX;
+      const dy = pos.y - closestY;
+      const distSq = dx * dx + dy * dy;
+      const dist = Math.sqrt(distSq);
+      if (dist < 1e-6) {
+        pos.x = ax + hw + r;
+        return;
+      }
+      const overlap = r - dist;
+      if (overlap <= 0) return;
+
+      const nx = dx / dist;
+      const ny = dy / dist;
+      pos.x += nx * overlap;
+      pos.y += ny * overlap;
+    });
+  }
+
   private update(deltaTime: number) {
     // Обновляем локальное предсказание (движение своего игрока)
     if (this.localPlayerState && this.room) {
@@ -602,6 +644,8 @@ export class GameClient {
       // Применяем velocity к позиции
       this.localPlayerState.x += this.localPlayerState.vx * dt;
       this.localPlayerState.y += this.localPlayerState.vy * dt;
+      // Разрешаем коллизии с препятствиями (как на сервере), чтобы предсказание не проходило сквозь стены
+      this.resolveLocalPlayerCollisions();
       
       // Обновляем визуализацию
       const myPlayer = this.room.state.players.get(this.mySessionId);
