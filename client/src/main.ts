@@ -84,6 +84,13 @@ function initApp() {
     };
   }
 
+  const characterStateEl = document.getElementById('character-state');
+  if (characterStateEl) {
+    gameClient.onCharacterSelectedChange = (selected) => {
+      characterStateEl.textContent = selected ? 'selected' : '—';
+    };
+  }
+
   const interactHintEl = document.getElementById('interact-hint');
   if (interactHintEl) {
     gameClient.onInteractHintChange = (show) => {

@@ -11,6 +11,7 @@ import { Interactable } from "./components/Interactable";
 import { MovementSystem } from "./systems/MovementSystem";
 import { InputSystem } from "./systems/InputSystem";
 import { CollisionSystem } from "./systems/CollisionSystem";
+import { Pathfinder, type AABB } from "../pathfinding/Pathfinder";
 
 export class GameWorld {
   private entities: Map<string, Entity> = new Map();
@@ -18,6 +19,8 @@ export class GameWorld {
   private componentManager: ComponentManager;
   private systemManager: SystemManager;
   private nextEntityId: number = 0;
+
+  private readonly pathfinder = new Pathfinder(24, 30);
 
   constructor() {
     this.componentManager = new ComponentManager();
@@ -64,17 +67,16 @@ export class GameWorld {
   private lastMoveToTime: Map<string, number> = new Map();
   private readonly MOVE_TO_RATE_MS = 100;
 
-  handlePlayerInput(playerId: string, input: any) {
+  handlePlayerInput(playerId: string, input: any): { x: number; y: number }[] | null {
     const targetX = typeof input.targetX === "number" ? input.targetX : null;
     const targetY = typeof input.targetY === "number" ? input.targetY : null;
-    if (targetX === null || targetY === null) return;
+    if (targetX === null || targetY === null) return null;
 
     const now = Date.now();
     const last = this.lastMoveToTime.get(playerId) ?? 0;
-    if (now - last < this.MOVE_TO_RATE_MS) return;
+    if (now - last < this.MOVE_TO_RATE_MS) return null;
     this.lastMoveToTime.set(playerId, now);
 
-    let found = false;
     for (const [entityId] of this.entities.entries()) {
       const inputController = this.componentManager.getComponent<InputController>(
         entityId,
@@ -82,17 +84,27 @@ export class GameWorld {
       );
 
       if (inputController && inputController.playerId === playerId) {
-        inputController.targetX = targetX;
-        inputController.targetY = targetY;
-        found = true;
-        console.log(`[GameWorld] Updated target for player ${playerId}: (${targetX.toFixed(2)}, ${targetY.toFixed(2)})`);
-        break;
+        const position = this.componentManager.getComponent<Position>(entityId, Position);
+        if (!position) break;
+        const obstacles: AABB[] = [];
+        for (const [, data] of this.getStaticEntities()) {
+          if (data.collider.shape === "aabb") {
+            obstacles.push({
+              x: data.position.x,
+              y: data.position.y,
+              halfWidth: data.collider.halfWidth,
+              halfHeight: data.collider.halfHeight,
+            });
+          }
+        }
+        const path = this.pathfinder.findPath(position.x, position.y, targetX, targetY, obstacles);
+        inputController.waypoints = path.map((p) => ({ x: p.x, y: p.y }));
+        console.log(`[GameWorld] Path for player ${playerId}: ${path.length} waypoints to (${targetX.toFixed(2)}, ${targetY.toFixed(2)})`);
+        return path;
       }
     }
-
-    if (!found) {
-      console.warn(`[GameWorld] Player ${playerId} not found in entities! Total entities: ${this.entities.size}`);
-    }
+    console.warn(`[GameWorld] Player ${playerId} not found in entities! Total entities: ${this.entities.size}`);
+    return null;
   }
 
   update(deltaTime: number) {

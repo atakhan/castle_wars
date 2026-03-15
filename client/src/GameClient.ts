@@ -35,12 +35,20 @@ export class GameClient {
   private players: Map<string, PIXI.Graphics> = new Map();
   private playerContainer: PIXI.Container;
   private obstacleContainer: PIXI.Container;
+  private routeContainer: PIXI.Container;
+  private fxContainer: PIXI.Container;
   private staticEntityGraphics: Map<string, PIXI.Graphics> = new Map();
+  private routeGraphics: PIXI.Graphics | null = null;
+  private clickFxBalls: { graphics: PIXI.Graphics; startTime: number; duration: number }[] = [];
+  private readonly CLICK_FX_DURATION_MS = 450;
+  private readonly CLICK_FX_MAX_RADIUS = 35;
   
   // Input handling (mouse: select character, then right-click to move)
   private inputSequence: number = 0;
   private characterSelected: boolean = false;
   private localTarget: { x: number; y: number } | null = null;
+  private localWaypoints: { x: number; y: number }[] = [];
+  private lastReceivedPath: { x: number; y: number }[] | null = null;
 
   // Client-side prediction для своего игрока
   private localPlayerState: LocalPlayerState | null = null;
@@ -62,6 +70,7 @@ export class GameClient {
   public onStatusChange?: (status: string) => void;
   public onPlayersChange?: (count: number) => void;
   public onInteractHintChange?: (show: boolean) => void;
+  public onCharacterSelectedChange?: (selected: boolean) => void;
   
   private mySessionId: string = '';
   private readonly INTERACT_RADIUS = 60;
@@ -69,8 +78,12 @@ export class GameClient {
 
   constructor(private app: PIXI.Application, private serverUrl: string) {
     this.obstacleContainer = new PIXI.Container();
+    this.routeContainer = new PIXI.Container();
+    this.fxContainer = new PIXI.Container();
     this.playerContainer = new PIXI.Container();
     this.app.stage.addChild(this.obstacleContainer);
+    this.app.stage.addChild(this.routeContainer);
+    this.app.stage.addChild(this.fxContainer);
     this.app.stage.addChild(this.playerContainer);
     
     this.client = new Client(serverUrl);
@@ -173,8 +186,12 @@ export class GameClient {
       this.room = null;
       this.localPlayerState = null;
       this.pendingInputs = [];
+      this.localWaypoints = [];
+      this.lastReceivedPath = null;
+      this.localTarget = null;
       this.playerSnapshots.clear();
       this.removeAllObstacles();
+      this.setCharacterSelected(false);
     });
 
     this.room.onError((code: number, message: string) => {
@@ -182,8 +199,16 @@ export class GameClient {
       this.updateStatus('Connection error');
     });
 
+    this.room.onMessage("path", (path: { x: number; y: number }[]) => {
+      this.lastReceivedPath = path;
+      this.localWaypoints = [...path];
+      this.localTarget = null;
+    });
+
     // Start render loop (60 FPS)
     this.app.ticker.add(this.update.bind(this));
+
+    this.onCharacterSelectedChange?.(this.characterSelected);
   }
 
   private handlePlayerStateUpdate(sessionId: string, player: Player) {
@@ -281,7 +306,13 @@ export class GameClient {
   private replayPendingInputs() {
     if (this.pendingInputs.length === 0) return;
     const last = this.pendingInputs[this.pendingInputs.length - 1];
-    this.localTarget = { x: last.targetX, y: last.targetY };
+    if (this.lastReceivedPath && this.lastReceivedPath.length > 0) {
+      this.localWaypoints = [...this.lastReceivedPath];
+      this.localTarget = null;
+    } else {
+      this.localTarget = { x: last.targetX, y: last.targetY };
+      this.localWaypoints = [];
+    }
   }
 
   private removeAcknowledgedInputs() {
@@ -319,9 +350,12 @@ export class GameClient {
 
     view.addEventListener('pointerdown', (e: PointerEvent) => {
       const { worldX, worldY } = this.screenToWorld(e.clientX, e.clientY);
+      this.spawnClickFx(e.clientX, e.clientY);
       if (e.button === 0) {
         if (this.isClickOnMyCharacter(worldX, worldY)) {
-          this.characterSelected = true;
+          this.setCharacterSelected(true);
+        } else {
+          this.setCharacterSelected(false);
         }
       } else if (e.button === 2 && this.characterSelected) {
         this.sendMoveTo(worldX, worldY);
@@ -339,11 +373,37 @@ export class GameClient {
     return { worldX, worldY };
   }
 
+  private setCharacterSelected(selected: boolean) {
+    if (this.characterSelected === selected) return;
+    this.characterSelected = selected;
+    this.onCharacterSelectedChange?.(this.characterSelected);
+  }
+
   private isClickOnMyCharacter(worldX: number, worldY: number): boolean {
     if (!this.localPlayerState) return false;
     const dx = worldX - this.localPlayerState.x;
     const dy = worldY - this.localPlayerState.y;
     return dx * dx + dy * dy <= this.PLAYER_COLLIDER_RADIUS * this.PLAYER_COLLIDER_RADIUS;
+  }
+
+  /** UX-only: spawn a ball at click position (screen space), animates and removes. */
+  private spawnClickFx(clientX: number, clientY: number) {
+    const view = this.app.view as HTMLCanvasElement;
+    const rect = view.getBoundingClientRect();
+    const x = (clientX - rect.left) * (this.app.screen.width / rect.width);
+    const y = (clientY - rect.top) * (this.app.screen.height / rect.height);
+    const g = new PIXI.Graphics();
+    g.beginFill(0xffffff, 0.7);
+    g.drawCircle(0, 0, this.CLICK_FX_MAX_RADIUS);
+    g.endFill();
+    g.x = x;
+    g.y = y;
+    this.fxContainer.addChild(g);
+    this.clickFxBalls.push({
+      graphics: g,
+      startTime: Date.now(),
+      duration: this.CLICK_FX_DURATION_MS,
+    });
   }
 
   private sendMoveTo(targetX: number, targetY: number) {
@@ -371,6 +431,8 @@ export class GameClient {
 
   private applyLocalPrediction(targetX: number, targetY: number) {
     this.localTarget = { x: targetX, y: targetY };
+    this.localWaypoints = [];
+    this.lastReceivedPath = null;
   }
 
   private createPlayerVisualization(sessionId: string, player: Player) {
@@ -611,16 +673,39 @@ export class GameClient {
     if (this.localPlayerState && this.room) {
       const dt = deltaTime / 60; // PixiJS: 1.0 = 60 FPS -> seconds
 
-      if (this.localTarget) {
-        const dx = this.localTarget.x - this.localPlayerState.x;
-        const dy = this.localTarget.y - this.localPlayerState.y;
+      const target = this.localWaypoints.length > 0 ? this.localWaypoints[0] : this.localTarget;
+      if (target) {
+        const dx = target.x - this.localPlayerState.x;
+        const dy = target.y - this.localPlayerState.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < this.SNAP_THRESHOLD) {
-          this.localPlayerState.x = this.localTarget.x;
-          this.localPlayerState.y = this.localTarget.y;
+          this.localPlayerState.x = target.x;
+          this.localPlayerState.y = target.y;
           this.localPlayerState.vx = 0;
           this.localPlayerState.vy = 0;
-          this.localTarget = null;
+          if (this.localWaypoints.length > 0) {
+            this.localWaypoints.shift();
+            if (this.localWaypoints.length > 0) {
+              const next = this.localWaypoints[0];
+              const ndx = next.x - this.localPlayerState.x;
+              const ndy = next.y - this.localPlayerState.y;
+              const ndist = Math.sqrt(ndx * ndx + ndy * ndy);
+              if (ndist >= this.SNAP_THRESHOLD) {
+                const nx = ndx / ndist;
+                const ny = ndy / ndist;
+                const speed = ndist <= this.ARRIVAL_RADIUS
+                  ? this.MOVE_SPEED * (ndist / this.ARRIVAL_RADIUS)
+                  : this.MOVE_SPEED;
+                this.localPlayerState.vx = nx * speed;
+                this.localPlayerState.vy = ny * speed;
+                this.localPlayerState.direction = Math.atan2(this.localPlayerState.vy, this.localPlayerState.vx);
+              }
+            } else {
+              this.lastReceivedPath = null;
+            }
+          } else {
+            this.localTarget = null;
+          }
         } else if (dist <= this.ARRIVAL_RADIUS) {
           const nx = dx / dist;
           const ny = dy / dist;
@@ -653,6 +738,45 @@ export class GameClient {
           this.updatePlayerVisualization(sessionId, player);
         }
       });
+    }
+
+    // Click FX: advance and remove expired balls
+    const now = Date.now();
+    for (let i = this.clickFxBalls.length - 1; i >= 0; i--) {
+      const ball = this.clickFxBalls[i];
+      const elapsed = now - ball.startTime;
+      const t = Math.min(1, elapsed / ball.duration);
+      ball.graphics.scale.set(t);
+      ball.graphics.alpha = 1 - t;
+      if (t >= 1) {
+        this.fxContainer.removeChild(ball.graphics);
+        ball.graphics.destroy();
+        this.clickFxBalls.splice(i, 1);
+      }
+    }
+
+    // Route: draw waypoints and lines (world coords -> screen)
+    const centerX = this.app.screen.width / 2;
+    const centerY = this.app.screen.height / 2;
+    if (!this.routeGraphics) {
+      this.routeGraphics = new PIXI.Graphics();
+      this.routeContainer.addChild(this.routeGraphics);
+    }
+    this.routeGraphics.clear();
+    if (this.localWaypoints.length > 0) {
+      const pts = this.localWaypoints;
+      this.routeGraphics.lineStyle(3, 0x00ff88, 0.9);
+      this.routeGraphics.moveTo(pts[0].x + centerX, pts[0].y + centerY);
+      for (let i = 1; i < pts.length; i++) {
+        this.routeGraphics.lineTo(pts[i].x + centerX, pts[i].y + centerY);
+      }
+      const waypointRadius = 8;
+      this.routeGraphics.lineStyle(0);
+      this.routeGraphics.beginFill(0x00ff88, 0.85);
+      for (let i = 0; i < pts.length; i++) {
+        this.routeGraphics.drawCircle(pts[i].x + centerX, pts[i].y + centerY, waypointRadius);
+      }
+      this.routeGraphics.endFill();
     }
 
     // Interact hint: show "E - interact" when near an interactable

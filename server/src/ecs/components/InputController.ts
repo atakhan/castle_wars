@@ -1,7 +1,11 @@
+export interface Waypoint {
+  x: number;
+  y: number;
+}
+
 export class InputController {
   constructor(
     public playerId: string,
-    public targetX: number | null = null,
-    public targetY: number | null = null
+    public waypoints: Waypoint[] = []
   ) {}
 }

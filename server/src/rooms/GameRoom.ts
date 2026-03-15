@@ -29,7 +29,10 @@ export class GameRoom extends Room<GameState> {
     const handler = (client: Client, message: any) => {
       console.log(`[onMessage 'input'] Input from ${client.sessionId}:`, message);
       try {
-        this.world.handlePlayerInput(client.sessionId, message);
+        const path = this.world.handlePlayerInput(client.sessionId, message);
+        if (path && path.length > 0) {
+          client.send("path", path);
+        }
       } catch (error) {
         console.error(`Error handling input from ${client.sessionId}:`, error);
       }
